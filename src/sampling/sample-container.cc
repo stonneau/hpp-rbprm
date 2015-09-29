@@ -143,7 +143,7 @@ bool rbprm::sampling::GetCandidates(const SampleContainer& sc, const fcl::Transf
                                                                           const hpp::model::CollisionObjectPtr_t& o2,
                                                                           const fcl::Vec3f& direction, hpp::rbprm::sampling::T_OctreeReport &reports)
 {
-    fcl::CollisionRequest req(50, true);
+    fcl::CollisionRequest req(100, true);
     fcl::CollisionResult cResult;
     fcl::CollisionObjectPtr_t obj = o2->fcl();
     fcl::collide(sc.pImpl_->geometry_.get(), treeTrf, obj->collisionGeometry().get(), obj->getTransform(), req, cResult);

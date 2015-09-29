@@ -116,7 +116,7 @@ namespace stability{
                 }
                 positions(i+3*c) = transform.getTranslation()[i];
             }
-            frictions(c) = 0.7; // TODO parametrize
+            frictions(c) = 0.6; // TODO parametrize
             xs(c) = limb->x_;
             ys(c) = limb->y_;
         }
