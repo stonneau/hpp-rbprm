@@ -52,9 +52,11 @@ namespace hpp {
     }
     }
 
-    std::vector<State> RbPrmInterpolation::Interpolate(const model::ObjectVector_t &collisionObjects, const double timeStep, const double robustnessTreshold)
+    std::vector<State> RbPrmInterpolation::Interpolate(const affMap_t& affordances,
+			const std::map<std::string, std::vector<std::string> >& affFilters,
+			const double timeStep, const double robustnessTreshold)
     {
-        if(!path_) throw std::runtime_error ("Can not interpolate; not path given to interpolator ");
+        if(!path_) throw std::runtime_error ("Cannot interpolate; no path given to interpolator ");
         std::vector<model::Configuration_t> configs;
         const core::interval_t& range = path_->timeRange();
         configs.push_back(start_.configuration_);
@@ -62,11 +64,13 @@ namespace hpp {
         {
             configs.push_back(configPosition(configs.back(),path_,i));
         }
-        return Interpolate(collisionObjects, configs, robustnessTreshold);
+        return Interpolate(affordances, affFilters, configs, robustnessTreshold);
     }
 
-    std::vector<State> RbPrmInterpolation::Interpolate(const model::ObjectVector_t &collisionObjects,
-                                                       const std::vector<model::Configuration_t>& configs, const double robustnessTreshold)
+    std::vector<State> RbPrmInterpolation::Interpolate(const affMap_t& affordances,
+			const std::map<std::string, std::vector<std::string> >& affFilters,
+			const std::vector<model::Configuration_t>& configs,
+			const double robustnessTreshold)
     {
         int nbFailures = 0;
         std::vector<State> states;
@@ -90,7 +94,9 @@ namespace hpp {
             // TODO Direction 6d
             bool sameAsPrevious(true);
             bool multipleBreaks(false);
-            State newState = ComputeContacts(previous, robot_,configuration,collisionObjects,direction,sameAsPrevious,multipleBreaks,allowFailure,robustnessTreshold);
+            State newState = ComputeContacts(previous, robot_,configuration,
+						affordances,affFilters,direction,
+							sameAsPrevious, multipleBreaks,allowFailure,robustnessTreshold);
             if(allowFailure && multipleBreaks)
             {
                 ++ nbFailures;

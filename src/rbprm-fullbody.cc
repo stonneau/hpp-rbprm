@@ -312,8 +312,8 @@ namespace hpp {
                               const std::string& limbId,
                               const hpp::rbprm::RbPrmLimbPtr_t& limb,
                               model::ConfigurationIn_t rbconfiguration,
-                              model::ConfigurationOut_t configuration,
-                              const model::ObjectVector_t &collisionObjects, const fcl::Vec3f& direction,
+                              model::ConfigurationOut_t configuration, const model::ObjectVector_t affordances,
+                              const fcl::Vec3f& direction,
                               fcl::Vec3f& position, fcl::Vec3f& normal, const double robustnessTreshold,
                               bool contactIfFails = true, bool stableForOneContact = true,
                               const sampling::heuristic evaluate = 0)
@@ -330,13 +330,19 @@ namespace hpp {
       limb->limb_->robot()->computeForwardKinematics ();
       fcl::Transform3f transform = limb->octreeRoot(); // get root transform from configuration
 
-      std::vector<sampling::T_OctreeReport> reports(collisionObjects.size());
-      std::size_t i (0);
+
       //#pragma omp parallel for
       // request samples which collide with each of the collision objects
-      sampling::heuristic eval = evaluate; if (!eval) eval =limb->evaluate_;
-      for(model::ObjectVector_t::const_iterator oit = collisionObjects.begin();
-          oit != collisionObjects.end(); ++oit, ++i)
+      
+		
+			sampling::heuristic eval = evaluate; if(!eval) eval =  limb->evaluate_;
+      std::size_t i (0);
+		  if (affordances.empty ()) {
+		  	throw std::runtime_error ("No aff objects found!!!");
+		  }
+		  std::vector<sampling::T_OctreeReport> reports(affordances.size());
+      for(model::ObjectVector_t::const_iterator oit = affordances.begin();
+          oit != affordances.end(); ++oit, ++i)
       {
           if(eval)
             sampling::GetCandidates(limb->sampleContainer_, transform, *oit, direction, reports[i], eval);
@@ -492,9 +498,49 @@ else
       return status;
     }
 
-    bool RepositionContacts(State& result, const hpp::rbprm::RbPrmFullBodyPtr_t& body,core::CollisionValidationPtr_t validation,
-                            model::ConfigurationOut_t config,
-                            const model::ObjectVector_t &collisionObjects, const fcl::Vec3f& direction, const double robustnessTreshold)
+		hpp::model::ObjectVector_t getAffObjectsForLimb(const std::string& limb,
+			const affMap_t& affordances, const std::map<std::string, std::vector<std::string> >& affFilters)
+		{
+			model::ObjectVector_t affs;
+			std::vector<std::string> affTypes;
+			bool settingFound = false;
+			for (std::map<std::string, std::vector<std::string> >::const_iterator fIt =
+				affFilters.begin (); fIt != affFilters.end (); ++fIt) {
+				std::size_t found = fIt->first.find(limb);
+ 			  if (found != std::string::npos) {
+				affTypes = fIt->second;
+				settingFound = true;
+				break;
+				}
+			}
+			if (!settingFound) {
+        // TODO: Keep warning or delete it?
+				std::cout << "No affordance filter setting found for limb " << limb
+					<< ". Has such filter been set?" << std::endl;
+				// Use all AFF OBJECTS as default if no filter setting exists
+				for (affMap_t::const_iterator affordanceIt = affordances.begin ();
+					affordanceIt != affordances.end (); ++affordanceIt) {
+					std::copy (affordanceIt->second.begin (), affordanceIt->second.end (),
+						std::back_inserter (affs));
+				}
+			} else {
+				for (std::vector<std::string>::const_iterator affTypeIt = affTypes.begin ();
+					affTypeIt != affTypes.end (); ++affTypeIt) {
+					affMap_t::const_iterator affIt = affordances.find(*affTypeIt);
+					std::copy (affIt->second.begin (), affIt->second.end (), std::back_inserter (affs));
+				}
+			}
+			if (affs.empty()) {
+			throw std::runtime_error ("No aff objects found for limb " + limb);
+			}
+			return affs;
+		}
+
+    bool RepositionContacts(State& result, const hpp::rbprm::RbPrmFullBodyPtr_t& body,
+			core::CollisionValidationPtr_t validation,
+      model::ConfigurationOut_t config, const affMap_t& affordances,
+      const std::map<std::string, std::vector<std::string> >& affFilters, const fcl::Vec3f& direction,
+			const double robustnessTreshold)
     {
         // replace existing contacts
         // start with older contact created
@@ -516,9 +562,12 @@ else
             for(std::vector<std::string>::const_iterator cit = group.begin();
                 notFound && cit != group.end(); ++cit)
             {
+								hpp::model::ObjectVector_t affs = getAffObjectsForLimb (*cit,
+									affordances, affFilters);
+
                 if(ComputeStableContact(body, result, validation, *cit, body->GetLimbs().at(*cit),save, config,
-                                        collisionObjects, direction, position, normal, robustnessTreshold, false)
-                        == STABLE_CONTACT)
+                	affs, direction, position, normal, robustnessTreshold, false)
+                  == STABLE_CONTACT)
                 {
                     nContactName = *cit;
                     notFound = false;
@@ -555,8 +604,10 @@ else
         return result.stable;
     }
 
-    hpp::rbprm::State ComputeContacts(const hpp::rbprm::RbPrmFullBodyPtr_t& body, model::ConfigurationIn_t configuration,
-                                      const model::ObjectVector_t& collisionObjects, const fcl::Vec3f& direction, const double robustnessTreshold)
+    hpp::rbprm::State ComputeContacts(const hpp::rbprm::RbPrmFullBodyPtr_t& body,
+			model::ConfigurationIn_t configuration, const affMap_t& affordances,
+      const std::map<std::string, std::vector<std::string> >& affFilters, const fcl::Vec3f& direction,
+			const double robustnessTreshold)
     {
         const T_Limb& limbs = body->GetLimbs();
         State result;
@@ -569,10 +620,14 @@ else
         {
             if(!ContactExistsWithinGroup(lit->second, body->limbGroups_ ,result))
             {
+								hpp::model::ObjectVector_t affs = getAffObjectsForLimb (lit->first,
+									affordances, affFilters);
+
                 fcl::Vec3f normal, position;
-                ComputeStableContact(body,result, body->limbcollisionValidations_.at(lit->first), lit->first, lit->second,
-                                     configuration,
-                                     result.configuration_, collisionObjects, direction, position, normal, robustnessTreshold, true, false);
+                ComputeStableContact(body,result, 
+									body->limbcollisionValidations_.at(lit->first), lit->first,
+									lit->second, configuration, result.configuration_, affs,
+									direction, position, normal, robustnessTreshold, true, false);
             }
             result.nbContacts = result.contactNormals_.size();
         }
@@ -581,10 +636,13 @@ else
         return result;
     }
 
-    hpp::rbprm::State ComputeContacts(const hpp::rbprm::State& previous, const hpp::rbprm::RbPrmFullBodyPtr_t& body, model::ConfigurationIn_t configuration,
-                                      const model::ObjectVector_t& collisionObjects,
-                                      const fcl::Vec3f& direction, bool& contactMaintained, bool& multipleBreaks,
-                                      const bool allowFailure, const double robustnessTreshold)
+    hpp::rbprm::State ComputeContacts(const hpp::rbprm::State& previous,
+			const hpp::rbprm::RbPrmFullBodyPtr_t& body,
+			model::ConfigurationIn_t configuration,
+			const affMap_t& affordances,
+			const std::map<std::string, std::vector<std::string> >& affFilters,
+			const fcl::Vec3f& direction, bool& contactMaintained, bool& multipleBreaks,
+      const bool allowFailure, const double robustnessTreshold)
     {
 //static int id = 0;
     const T_Limb& limbs = body->GetLimbs();
@@ -609,11 +667,16 @@ else
         model::Configuration_t config = previous.configuration_;
         body->device_->currentConfiguration(config);
         body->device_->computeForwardKinematics();
+				hpp::model::ObjectVector_t affs = getAffObjectsForLimb (replaceContact,
+					affordances, affFilters);
         // if no stable replacement contact found
         // modify contact order to try to replace another contact at the next step
-        if(ComputeStableContact(body,result,body->limbcollisionValidations_.at(replaceContact),replaceContact,body->limbs_.at(replaceContact),
-                             configuration, config,collisionObjects,direction,position, normal, robustnessTreshold, true, false, body->factory_.heuristics_["random"])
-                != STABLE_CONTACT)
+        if(ComputeStableContact(body,result,
+					body->limbcollisionValidations_.at(replaceContact),
+					replaceContact,body->limbs_.at(replaceContact),
+          configuration, config,affs,direction,
+					position, normal, robustnessTreshold, true, false,
+					body->factory_.heuristics_["random"]) != STABLE_CONTACT)
         {
             result = previous;
             result.contactOrder_.pop();
@@ -636,10 +699,15 @@ else
         if(result.contacts_.find(lit->first) == result.contacts_.end()
                 && !ContactExistsWithinGroup(lit->second, body->limbGroups_ ,result))
         {
+						hpp::model::ObjectVector_t affs = getAffObjectsForLimb (lit->first,
+							affordances, affFilters);
+
             // if the contactMaintained flag remains true,
             // the contacts have not changed, and the state can be merged with the previous one eventually
-            contactCreated = ComputeStableContact(body, result, body->limbcollisionValidations_.at(lit->first), lit->first, lit->second, configuration,
-                                                  config, collisionObjects, direction, position, normal, robustnessTreshold) != NO_CONTACT || contactCreated;
+            contactCreated = ComputeStableContact(body, result,
+							body->limbcollisionValidations_.at(lit->first), lit->first,
+							lit->second, configuration, config, affs, direction, position, normal,
+							robustnessTreshold) != NO_CONTACT || contactCreated;
         }
     }
     contactMaintained = !contactCreated && contactMaintained;
@@ -653,7 +721,8 @@ else
         {
             contactMaintained = false;
             // could not reposition any contact. Planner has failed
-            if (!RepositionContacts(result, body, body->collisionValidation_, config, collisionObjects, direction, robustnessTreshold))
+            if (!RepositionContacts(result, body, body->collisionValidation_,
+							config, affordances, affFilters, direction, robustnessTreshold))
             {
                 std::cout << "planner is stuck; failure " <<  std::endl;
             }
@@ -671,12 +740,16 @@ else
                 model::Configuration_t config = previous.configuration_;
                 body->device_->currentConfiguration(config);
                 body->device_->computeForwardKinematics();
+								hpp::model::ObjectVector_t affs = getAffObjectsForLimb (replaceContact,
+									affordances, affFilters);
+
                 // if a contact has already been created this iteration, or new contact is not stable
                 // raise failure and switch contact order.
-                if(contactCreated || ComputeStableContact(body,result,body->limbcollisionValidations_.at(replaceContact),replaceContact,
-                                     body->limbs_.at(replaceContact),
-                                     configuration, config,
-                                     collisionObjects,direction,position, normal,robustnessTreshold) != STABLE_CONTACT)
+                if(contactCreated || ComputeStableContact(body,result,
+									body->limbcollisionValidations_.at(replaceContact),replaceContact,
+                  body->limbs_.at(replaceContact), configuration, 
+								        config, affs, direction,position,
+									normal,robustnessTreshold) != STABLE_CONTACT)
                 {
                     multipleBreaks = true;
                     result = previous;
