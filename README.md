@@ -26,11 +26,11 @@ The planner has applications in both robotics and computer graphics applications
 To install HPP-RBPRM: 
 
   1. install HPP 
-	- see https://github.com/humanoid-path-planner/hpp-doc
+	- see https://github.com/humanoid-path-planner/hpp-doc/tree/devel
 	- IMPORTANT: you should use the devel branch of the project hpp-fcl for the software to work correctly
 
   2. install hpp-affordance, and hpp-affordance corba, comprising terrain analysis tools
-	- see https://github.com/humanoid-path-planner/hpp-affordance
+	- see https://github.com/humanoid-path-planner/hpp-affordance-corba
 
   3. install robust-equilibrium-lib, a library for quickly asserting static equilibrium
 	- see https://github.com/andreadelprete/robust-equilibrium-lib
@@ -40,7 +40,7 @@ To install HPP-RBPRM:
 
 				mkdir $HPP_RBPRM_DIR/build
 				cd $HPP_RBPRM_DIR/build
-				cd cmake ..
+				cmake -DCMAKE_INSTALL_PREFIX=${DEVEL_DIR}/install ..
 				make install
 
   5. Optionally, install the python bindings for python, and example scripts (HPP-RBPRM-CORBA)
