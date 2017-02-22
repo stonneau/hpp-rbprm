@@ -193,7 +193,7 @@ namespace
       // seed = 1486564172 ; // downSlop minz = 0.45 (20min)
       //seed = 1486643780; // downSlope HyQ_large
       // seed = 1486657707 ; // downSlope hrp2
-      // seed = 1487238007; // slalom hyq v=1
+       seed = 1487238007; // slalom hyq v=1
      //seed = 1487348584 ; // hyq slalom v = 0.5
       srand (seed);
       hppDout(notice,"&&&&&& SEED = "<<seed);
