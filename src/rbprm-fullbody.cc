@@ -204,8 +204,8 @@ namespace hpp {
         return rep.status_;
     }
 
-    /*static int nbFAILSNEW = 0;
-    static int nbSUCCNEW = 0;*/
+    static int nbFAILSNEW = 0;
+    static int nbSUCCNEW = 0;
 
     hpp::rbprm::State ComputeContacts(const hpp::rbprm::RbPrmFullBodyPtr_t& body,
 			model::ConfigurationIn_t configuration, const affMap_t& affordances,
@@ -257,7 +257,7 @@ namespace hpp {
         body->device_->currentConfiguration(configuration);
         body->device_->computeForwardKinematics ();
         // try to maintain previous contacts
-        contact::ContactGenHelper cHelper(body,previous,configuration,affordances,affFilters,robustnessTreshold,1,1,false,
+        contact::ContactGenHelper cHelper(body,previous,configuration,affordances,affFilters,robustnessTreshold,2,1,false,
                                           true,direction,acceleration,true,false);
 
         contact::ContactReport rep = contact::oneStep(cHelper);
@@ -265,7 +265,7 @@ namespace hpp {
         multipleBreaks = rep.multipleBreaks_;
         if(rep.repositionedInPlace_)
             multipleBreaks = true;
-        /*if(!rep.success_ || rep.repositionedInPlace_)
+        if(!rep.success_ || rep.repositionedInPlace_)
         {
             std::cout << "Contact repositionning occured " << ++nbFAILSNEW << std::endl;
             std::cout << "(successes) " << nbSUCCNEW << std::endl;
@@ -273,7 +273,7 @@ namespace hpp {
         else
         {
             ++nbSUCCNEW;
-        }*/
+        }
         body->device_->currentConfiguration(save);
         body->device_->controlComputation (flag);
         return rep.result_;

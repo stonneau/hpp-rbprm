@@ -263,7 +263,6 @@ T_ContactState gen_contacts_combinatorial(ContactGenHelper& contactGenHelper)
     return gen_contacts_combinatorial(freeLimbs, cState, contactGenHelper.maxContactCreations_);
 }
 
-
 ProjectionReport maintain_contacts(ContactGenHelper &contactGenHelper)
 {
     ProjectionReport rep;
@@ -434,6 +433,8 @@ ProjectionReport generate_contact(const ContactGenHelper &contactGenHelper, cons
     return rep;
 }
 
+
+
 ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
 {
     ProjectionReport rep;
@@ -447,10 +448,17 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
         contactGenHelper.checkStabilityGenerate_ = false; // stability not mandatory before last contact is created
         if(cState.second.empty() && contactGenHelper.workingState_.stable)
         {
-            rep.result_ = contactGenHelper.workingState_;
-            rep.status_ = NO_CONTACT;
-            rep.success_ = true;
-            return rep;
+            if(cState.first.nbContacts >2 || (cState.first.nbContacts == 2 &&
+                                              ((cState.first.contacts_.find("hrp2_rarm_rom") == cState.first.contacts_.end()) ||
+                                               cState.first.contacts_.at("hrp2_rarm_rom") == false)))
+            {
+                rep.result_ = contactGenHelper.workingState_;
+                rep.status_ = NO_CONTACT;
+                rep.success_ = true;
+                return rep;
+            }
+            else
+                continue;
         }
         for(std::vector<std::string>::const_iterator cit = cState.second.begin();
             cit != cState.second.end(); ++cit)
