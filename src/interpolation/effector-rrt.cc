@@ -87,20 +87,25 @@ using namespace core;
         //create evaluation function
         constraints::PositionPtr_t position = createPositionMethod(device,fcl::Vec3f(), effector);
         // define arbitrary number of way points depending on length
-        std::size_t nbWayPoints = std::size_t(std::max(effectorDistance * 10, 3.));
+        //std::size_t nbWayPoints = std::size_t(std::max(effectorDistance * 10, 3.));
+        //std::size_t nbWayPoints = 3;
         std::size_t dim = position->outputSize();
-        if(!(nbWayPoints % 2)) nbWayPoints+=1;
-        value_type pathIncrement = path->length() / nbWayPoints;
+        //if(!(nbWayPoints % 2)) nbWayPoints+=1;
+        //value_type pathIncrement = path->length() / nbWayPoints;
         T_Waypoint res;
         value_type t = path->timeRange().first;
         res.push_back(std::make_pair(0,GetEffectorPositionAt(path,position,t)));
-        for(std::size_t i = 1; i <nbWayPoints-1; ++i)
+        value_type half_t = t + ((path->timeRange().second - t)/2.);
+        res.push_back(std::make_pair(1,GetEffectorPositionAt(path,position,half_t)));
+        /*for(std::size_t i = 1; i <nbWayPoints-1; ++i)
         {
             t += pathIncrement;
             res.push_back(std::make_pair(i,GetEffectorPositionAt(path,position, t)));
-        }
-        res.push_back(std::make_pair(nbWayPoints-1,GetEffectorPositionAt(path,position,path->timeRange().second)));
-        if(IsLine(res) && effectorDistance > 0.03 )
+        }*/
+        //res.push_back(std::make_pair(nbWayPoints-1,GetEffectorPositionAt(path,position,path->timeRange().second)));
+        res.push_back(std::make_pair(2,GetEffectorPositionAt(path,position,path->timeRange().second)));
+        return res;
+/*        if(IsLine(res) && effectorDistance > 0.03 )
         {
             //value_type height = effectorDistance < 0.1 ? 0.01 : std::max(nbWayPoints* 0.015, 0.02) ;
 //std::cout << "is line " << std::endl;
@@ -139,7 +144,7 @@ value_type max_height = effectorDistance < 0.1 ? 0.03 : std::min( 0.07, std::max
                 }
             }
         }
-        return res;
+        return res;*/
     }
 
     JointPtr_t getEffector(RbPrmFullBodyPtr_t fullbody,
