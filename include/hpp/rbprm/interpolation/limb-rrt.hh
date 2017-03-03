@@ -46,6 +46,11 @@ namespace hpp {
         void operator ()(LimbRRTHelper& helper, const State& from, const State& to) const;
     };
 
+    struct SetLimbRRTFromPathConstraints
+    {
+        void operator ()(LimbRRTHelper& helper, const State& from, const State& to) const;
+    };
+
     core::PathPtr_t limbRRT(RbPrmFullBodyPtr_t fullbody, core::ProblemPtr_t referenceProblem,
                  const rbprm::CIT_State &startState, const rbprm::CIT_State &endState, const std::size_t numOptimizations);
 

@@ -123,6 +123,11 @@ bool maintain_contacts_stability_rec(hpp::rbprm::RbPrmFullBodyPtr_t fullBody,
          // removed more contacts, cannot be stable if previous state was not
         if(cState.contactOrder_.size() < contactLength) return false;
         ProjectionReport rep = projectToRootConfiguration(fullBody,targetRootConfiguration,cState);
+        /*if(rep.success_)
+        {
+            cState = rep.result_;
+            rep = projectToComPosition(fullBody,targetRootConfiguration.head<3>(),cState);
+        }*/
         Q_State copy_candidates = candidates;
         if(maintain_contacts_stability_rec(fullBody,targetRootConfiguration,copy_candidates,contactLength,acceleration, robustness, rep))
         {
@@ -280,6 +285,11 @@ ProjectionReport maintain_contacts(ContactGenHelper &contactGenHelper)
         State cState = candidates.front();
         candidates.pop();
         rep = projectToRootConfiguration(contactGenHelper.fullBody_,contactGenHelper.workingState_.configuration_,cState);
+        /*if(rep.success_)
+        {
+            cState = rep.result_;
+            rep = projectToComPosition(contactGenHelper.fullBody_,contactGenHelper.workingState_.configuration_.head<3>(),cState);
+        }*/
         if(rep.success_)
             rep = genColFree(contactGenHelper, rep);
         if(rep.success_)

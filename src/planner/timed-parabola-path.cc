@@ -160,7 +160,7 @@ namespace hpp {
       result[indexEcs+4]=0.;
       result[indexEcs+5]=-9.81; //FIXME : retrieve it from somewhere
 
-
+return true;
     } // impl_compute
 
 

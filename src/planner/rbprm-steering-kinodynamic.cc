@@ -259,7 +259,7 @@ namespace hpp{
 
       double alpha0=1.; // main variable of our LP problem
       Vector3 direction;
-/*    Vector3 toP,fromP,dPosition;
+   Vector3 toP,fromP,dPosition;
       Vector3 toV,fromV,dVelocity;
       const model::size_type indexECS =problem_->robot()->configSize() - problem_->robot()->extraConfigSpace().dimension (); // ecs index
 
@@ -286,9 +286,9 @@ namespace hpp{
       direction = dPosition;
       direction.normalize();
 
-*/
 
-      direction = computeDirection(*(near->configuration()),target);
+
+     //direction = computeDirection(*(near->configuration()),target);
       hppDout(info, "direction  = "<<direction.transpose());
       hppDout(info,"vector = ["<<(*(near->configuration()))[0]<<","<<(*(near->configuration()))[1]<<","<<(*(near->configuration()))[2]<<","<<direction[0]<<","<<direction[1]<<","<<direction[2]<<",0]");
       // define LP problem : with m+1 variables and 6 constraints
@@ -327,7 +327,7 @@ namespace hpp{
 
       hppDout(info,"Amax found : "<<alpha0);
       alpha0 = std::min(alpha0,aMaxFixed_);
-      //alpha0 -= 0.01; //FIX ME ???
+      alpha0 -= 0.01; //FIX ME ???
 
       hppDout(info,"Amax after min : "<<alpha0);
       aMax = alpha0*direction;

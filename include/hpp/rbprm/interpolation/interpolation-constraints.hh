@@ -44,6 +44,13 @@ namespace interpolation {
     void CreateEffectorConstraint(Helper_T& helper, const Reference& ref,  const JointPtr_t effectorJoint, const fcl::Vec3f& initTarget=fcl::Vec3f());
 
     template<class Helper_T, typename Reference>
+    void CreateRootConstraint(Helper_T& helper, const Reference& ref, const fcl::Vec3f& initTarget=fcl::Vec3f())
+    {
+        return CreateComConstraint<Helper_T, Reference>(helper, ref, initTarget);
+        //return CreateEffectorConstraint<Helper_T, Reference>(helper, ref, helper.fullBodyDevice_->rootJoint(), initTarget);
+    }
+
+    template<class Helper_T, typename Reference>
     void Create6DEffectorConstraint(Helper_T& helper, const Reference& ref,  const JointPtr_t effectorJoint, const fcl::Transform3f& initTarget=fcl::Transform3f());
 
     // Implementation

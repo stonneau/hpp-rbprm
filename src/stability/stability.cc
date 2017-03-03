@@ -231,6 +231,7 @@ const fcl::Vec3f comfcl = comcptr->com();*/
     RbPrmProfiler& watch = getRbPrmProfiler();
     watch.start("test balance");
 #endif
+    if(state.nbContacts < 3) return true;
         if(acc.norm() == 0){
           hppDout(notice,"isStable ? called with acc = 0");
           hppDout(notice,"configuration in state = "<<model::displayConfig(state.configuration_));

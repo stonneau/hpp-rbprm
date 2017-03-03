@@ -138,13 +138,18 @@ namespace hpp {
 
     core::PathPtr_t ParabolaPath::extract (const interval_t& subInterval) const throw (hpp::core::projection_error)
     {
+        std::cout << "trying to extract parabola " << std::endl;
       hppDout (error, "path extract is not recommended on parabola path");
       bool success;
-      core::Configuration_t q1 ((*this) (subInterval.first, success)); // straight
-      core::Configuration_t q2 ((*this) (subInterval.second, success)); // straight
-      ParabolaPathPtr_t result = rbprm::ParabolaPath::create(device_,q1,q2,computeLength(q1,q2),coefficients_, V0_, Vimp_, initialROMnames_, endROMnames_);
+      //core::Configuration_t q1 ((*this) (subInterval.first, success)); // straight
+      //core::Configuration_t q2 ((*this) (subInterval.second, success)); // straight
+      //ParabolaPathPtr_t result = this->createCopy(this);
+      ParabolaPath* ptr = new ParabolaPath (*this);
+      ParabolaPathPtr_t shPtr (ptr);
+      ptr->initCopy (shPtr);
       hppDout (info, "initialROMnames size= " << (*result).initialROMnames_.size ());
-      return result;
+      return shPtr;
+      //return result;
     }
 
     core::PathPtr_t ParabolaPath::reverse () const{

@@ -56,6 +56,18 @@ struct HPP_RBPRM_DLLAPI ProjectionReport
 ProjectionReport HPP_RBPRM_DLLAPI projectToRootPosition(hpp::rbprm::RbPrmFullBodyPtr_t fullBody, const fcl::Vec3f& target,
                                            const hpp::rbprm::State& currentState);
 
+
+/// Project a configuration to a target COM position, while maintaining contact constraints.
+/// If required, up to maxBrokenContacts can be broken in the process.
+/// root position is assumed to be at the 3 first dof.
+/// \param fullBody target Robot
+/// \param target, desired root position
+/// \param currentState current state of the robot (configuration and contacts)
+/// \return projection report containing the state projected
+ProjectionReport HPP_RBPRM_DLLAPI projectToComPosition(hpp::rbprm::RbPrmFullBodyPtr_t fullBody, const fcl::Vec3f& target,
+                                           const hpp::rbprm::State& currentState);
+
+
 /// Project a configuration to a target root configuration, while maintaining contact constraints.
 /// If required, up to maxBrokenContacts can be broken in the process.
 /// root position is assumed to be at the 3 first dof.

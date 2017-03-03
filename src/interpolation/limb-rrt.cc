@@ -23,10 +23,17 @@ namespace hpp {
 using namespace core;
   namespace rbprm {
   namespace interpolation {
+    /*void SetLimbRRTConstraints::operator ()(LimbRRTHelper& helper, const State& from, const State& to) const
+    {
+        CreateContactConstraints<LimbRRTHelper>(helper, from, to);
+    }*/
+
     void SetLimbRRTConstraints::operator ()(LimbRRTHelper& helper, const State& from, const State& to) const
     {
         CreateContactConstraints<LimbRRTHelper>(helper, from, to);
+        CreateEffectorConstraint<LimbRRTHelper,core::PathPtr_t>(helper, helper.refPath_, helper.fullbody_->device_->rootJoint(), from.configuration_.head<3>());
     }
+
 
     core::PathPtr_t limbRRT(RbPrmFullBodyPtr_t fullbody, core::ProblemPtr_t referenceProblem,
                  const rbprm::CIT_State &startState, const rbprm::CIT_State &endState, const std::size_t numOptimizations)

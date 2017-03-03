@@ -19,6 +19,9 @@
 #include <hpp/rbprm/projection/projection.hh>
 #include <hpp/rbprm/interpolation/interpolation-constraints.hh>
 #include <hpp/model/joint.hh>
+#include <hpp/constraints/relative-com.hh>
+#include <hpp/constraints/symbolic-calculus.hh>
+#include <hpp/constraints/symbolic-function.hh>
 
 #ifdef PROFILE
     #include "hpp/rbprm/rbprm-profiler.hh"
@@ -74,6 +77,27 @@ void CreateContactConstraints(hpp::rbprm::RbPrmFullBodyPtr_t fullBody, const hpp
                                                                               cosntraintsR)));
         }
     }
+}
+
+typedef constraints::PointCom PointCom;
+typedef constraints::CalculusBaseAbstract<PointCom::ValueType_t, PointCom::JacobianType_t> s_t;
+typedef constraints::SymbolicFunction<s_t> PointComFunction;
+typedef constraints::SymbolicFunction<s_t>::Ptr_t PointComFunctionPtr_t;
+
+void CreateComConstraint(hpp::rbprm::RbPrmFullBodyPtr_t fullBody, const fcl::Vec3f& target, core::ConfigProjectorPtr_t proj)
+{
+    model::DevicePtr_t device = fullBody->device_;
+    core::ComparisonTypePtr_t equals = core::Equality::create ();
+    model::CenterOfMassComputationPtr_t comComp = model::CenterOfMassComputation::
+      create (device);
+    comComp->add (device->rootJoint());
+    comComp->computeMass ();
+    PointComFunctionPtr_t comFunc = PointComFunction::create ("COM-walkgen",
+        device, PointCom::create (comComp));
+    NumericalConstraintPtr_t comEq = NumericalConstraint::create (comFunc, equals);
+    comEq->nonConstRightHandSide() = target;
+    proj->add(comEq);
+    proj->updateRightHandSide();
 }
 
 void CreateRootPosConstraint(hpp::rbprm::RbPrmFullBodyPtr_t fullBody, const fcl::Vec3f& target, core::ConfigProjectorPtr_t proj)
@@ -139,6 +163,21 @@ ProjectionReport projectToRootConfiguration(hpp::rbprm::RbPrmFullBodyPtr_t fullB
     core::ConfigProjectorPtr_t proj = core::ConfigProjector::create(fullBody->device_,"proj", 0.001, 40);
     CreateContactConstraints(fullBody, currentState, proj);
     LockFromRoot(fullBody->device_, fullBody->GetLimbs(), conf, proj);
+    model::Configuration_t configuration = currentState.configuration_;
+    res.success_ = proj->apply(configuration);
+    res.result_ = currentState;
+    res.result_.configuration_ = configuration;
+    return res;
+}
+
+ProjectionReport projectToComPosition(hpp::rbprm::RbPrmFullBodyPtr_t fullBody, const fcl::Vec3f& target,
+                                           const hpp::rbprm::State& currentState)
+{
+    ProjectionReport res;
+    core::ConfigProjectorPtr_t proj = core::ConfigProjector::create(fullBody->device_,"proj", 0.001, 100);
+    CreateContactConstraints(fullBody, currentState, proj);
+    CreateComConstraint(fullBody, target, proj);
+    //LockFromRoot(fullBody->device_, fullBody->GetLimbs(), conf, proj);
     model::Configuration_t configuration = currentState.configuration_;
     res.success_ = proj->apply(configuration);
     res.result_ = currentState;
