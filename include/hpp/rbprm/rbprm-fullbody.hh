@@ -116,6 +116,16 @@ namespace hpp {
         rbprm::T_Limb limbs_;
         T_LimbGroup limbGroups_;
         sampling::HeuristicFactory factory_;
+        unsigned short maxContactBreaks_;
+        std::vector <std::string> requiredLimbs_;
+
+    public:
+        unsigned short getMaxContactBreaks() const {return this->maxContactBreaks_;}
+        void setMaxContactBreaks(unsigned short mcb) {this->maxContactBreaks_ = mcb;}
+        std::vector <std::string> getRequiredLimbs() const {return this->requiredLimbs_;}
+        void addRequiredLimb(const std::string & limb);
+        void removeRequiredLimb(const std::string & limb);
+        void clearRequiredLimbs();
 
     private:
         void AddLimbPrivate(rbprm::RbPrmLimbPtr_t limb, const std::string& id, const std::string& name,

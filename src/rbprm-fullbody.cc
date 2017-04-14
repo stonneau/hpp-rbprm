@@ -148,11 +148,53 @@ namespace hpp {
     }
 
     RbPrmFullBody::RbPrmFullBody (const model::DevicePtr_t& device)
-        : device_(device)
+        : device_(device), maxContactBreaks_(2)
         , collisionValidation_(core::CollisionValidation::create(device))
         , weakPtr_()
     {
         // NOTHING
+    }
+
+    void RbPrmFullBody::addRequiredLimb(const std::string & limb)
+    {
+        //check the existence of the required limb to add
+        bool exists(false);
+        for(rbprm::T_Limb::const_iterator cit = limbs_.begin() ; !exists && cit != limbs_.end() ; ++cit)
+        {
+            if(limb == cit->first)
+            {
+                exists = true;
+            }
+        }
+        //if it exists, check if it is not already added anf if not, add it
+        if(exists)
+        {
+            bool found(false);
+            for(unsigned int i = 0 ; !found && (i < requiredLimbs_.size()) ; ++i)
+            {
+                found = true;
+            }
+            if(!found)
+            {
+                requiredLimbs_.push_back(limb);
+            }
+        }
+    }
+    void RbPrmFullBody::removeRequiredLimb(const std::string & limb)
+    {
+        bool found(false);
+        for(unsigned int i = 0 ; !found && (i < requiredLimbs_.size()) ; ++i)
+        {
+            if(requiredLimbs_[i] == limb)
+            {
+                requiredLimbs_.erase(requiredLimbs_.begin()+i);
+                found = true;
+            }
+        }
+    }
+    void RbPrmFullBody::clearRequiredLimbs()
+    {
+        requiredLimbs_.clear();
     }
 
     bool ContactExistsWithinGroup(const hpp::rbprm::RbPrmLimbPtr_t& limb,
@@ -253,7 +295,8 @@ namespace hpp {
         body->device_->currentConfiguration(configuration);
         body->device_->computeForwardKinematics ();
         // try to maintain previous contacts
-        contact::ContactGenHelper cHelper(body,previous,configuration,affordances,affFilters,robustnessTreshold,1,1,false,
+        std::size_t maxContactBreaks(static_cast<std::size_t>(body->getMaxContactBreaks()));
+        contact::ContactGenHelper cHelper(body,previous,configuration,affordances,affFilters,robustnessTreshold,maxContactBreaks,1,false,
                                           true,direction,fcl::Vec3f(0,0,0),false,false);
         contact::ContactReport rep = contact::oneStep(cHelper);
         contactMaintained = rep.contactMaintained_;

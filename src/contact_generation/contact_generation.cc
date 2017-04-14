@@ -440,6 +440,43 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
 {
     ProjectionReport rep;
     T_ContactState candidates = gen_contacts_combinatorial(contactGenHelper);
+    //remove candidates which not respect the required limbs in contact
+    T_ContactState candidates_tmp;
+    while(!candidates.empty())
+    {
+        // get the actives contacts in the state in the current ContactState
+        std::vector <std::string> activesContacts;
+        ContactState current = candidates.front();
+        for(std::map<std::string, bool>::const_iterator cit = current.first.contacts_.begin(); cit != current.first.contacts_.end(); ++cit)
+        {
+            if(cit->second == true)
+            {
+                activesContacts.push_back(cit->first);
+            }
+        }
+        // check if all the required limbs appeared in the actives contacts set
+        bool reqLimValid(true);
+        std::vector <std::string> reqLimbs(contactGenHelper.fullBody_->getRequiredLimbs());
+        for(unsigned int i = 0 ; reqLimValid && (i < reqLimbs.size()) ; ++i)
+        {
+            bool found(false);
+            for(unsigned int j = 0 ; !found && (j < activesContacts.size()) ; ++j)
+            {
+                if(reqLimbs[i] == activesContacts[j])
+                    found = true;
+            }
+            if(!found)
+                reqLimValid = false;
+        }
+        // if yes, keep this ContactState
+        if(reqLimValid)
+        {
+            candidates_tmp.push(current);
+        }
+        // remove the current ContactState of the queue
+        candidates.pop();
+    }
+    candidates = candidates_tmp;
     while(!candidates.empty() && !rep.success_)
     {
         //retrieve latest state
@@ -449,10 +486,13 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
         //contactGenHelper.checkStabilityGenerate_ = false; // stability not mandatory before last contact is created
         if(cState.second.empty() && (contactGenHelper.workingState_.stable || (stability::IsStable(contactGenHelper.fullBody_,contactGenHelper.workingState_) > contactGenHelper.robustnessTreshold_ )) )
         {
-            rep.result_ = contactGenHelper.workingState_;
-            rep.status_ = NO_CONTACT;
-            rep.success_ = true;
-            return rep;
+            if(contactGenHelper.workingState_.nbContacts > 3)
+            {
+                rep.result_ = contactGenHelper.workingState_;
+                rep.status_ = NO_CONTACT;
+                rep.success_ = true;
+                return rep;
+            }
         }
         for(std::vector<std::string>::const_iterator cit = cState.second.begin();
             cit != cState.second.end(); ++cit)
