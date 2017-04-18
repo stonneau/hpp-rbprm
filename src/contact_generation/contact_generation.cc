@@ -486,13 +486,13 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
         //contactGenHelper.checkStabilityGenerate_ = false; // stability not mandatory before last contact is created
         if(cState.second.empty() && (contactGenHelper.workingState_.stable || (stability::IsStable(contactGenHelper.fullBody_,contactGenHelper.workingState_) > contactGenHelper.robustnessTreshold_ )) )
         {
-            if(contactGenHelper.workingState_.nbContacts > 3)
-            {
+            //if(contactGenHelper.workingState_.nbContacts > 3)
+            //{
                 rep.result_ = contactGenHelper.workingState_;
                 rep.status_ = NO_CONTACT;
                 rep.success_ = true;
                 return rep;
-            }
+            //}
         }
         for(std::vector<std::string>::const_iterator cit = cState.second.begin();
             cit != cState.second.end(); ++cit)
