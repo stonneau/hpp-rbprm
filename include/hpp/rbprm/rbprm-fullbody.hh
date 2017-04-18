@@ -123,6 +123,7 @@ namespace hpp {
         unsigned short getMaxContactBreaks() const {return this->maxContactBreaks_;}
         void setMaxContactBreaks(unsigned short mcb) {this->maxContactBreaks_ = mcb;}
         std::vector <std::string> getRequiredLimbs() const {return this->requiredLimbs_;}
+        void printRequiredLimbs() const;
         void addRequiredLimb(const std::string & limb);
         void removeRequiredLimb(const std::string & limb);
         void clearRequiredLimbs();

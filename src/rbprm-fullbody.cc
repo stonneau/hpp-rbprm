@@ -155,6 +155,13 @@ namespace hpp {
         // NOTHING
     }
 
+    void RbPrmFullBody::printRequiredLimbs() const
+    {
+        for(int i=0; i < requiredLimbs_.size(); ++i)
+        {
+            std::cout << requiredLimbs_[i] << std::endl;
+        }
+    }
     void RbPrmFullBody::addRequiredLimb(const std::string & limb)
     {
         //check the existence of the required limb to add
@@ -172,7 +179,8 @@ namespace hpp {
             bool found(false);
             for(unsigned int i = 0 ; !found && (i < requiredLimbs_.size()) ; ++i)
             {
-                found = true;
+                if(requiredLimbs_[i] == limb)
+                    found = true;
             }
             if(!found)
             {
