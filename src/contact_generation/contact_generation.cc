@@ -444,37 +444,61 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
     T_ContactState candidates_tmp;
     while(!candidates.empty())
     {
-        // get the actives contacts in the state in the current ContactState
-        std::vector <std::string> activesContacts;
-        ContactState current = candidates.front();
-        for(std::map<std::string, bool>::const_iterator cit = current.first.contacts_.begin(); cit != current.first.contacts_.end(); ++cit)
+        int mode(0); // contact checking mode : mode == 0 --> normal, mode != 0 --> enhanced version
+        if(mode == 0)
         {
-            if(cit->second == true)
+            // get the actives contacts in the state in the current ContactState
+            std::vector <std::string> activesContacts;
+            ContactState current = candidates.front();
+            for(std::map<std::string, bool>::const_iterator cit = current.first.contacts_.begin(); cit != current.first.contacts_.end(); ++cit)
             {
-                activesContacts.push_back(cit->first);
+                if(cit->second == true)
+                {
+                    activesContacts.push_back(cit->first);
+                }
             }
-        }
-        // check if all the required limbs appeared in the actives contacts set
-        bool reqLimValid(true);
-        std::vector <std::string> reqLimbs(contactGenHelper.fullBody_->getRequiredLimbs());
-        for(unsigned int i = 0 ; reqLimValid && (i < reqLimbs.size()) ; ++i)
-        {
-            bool found(false);
-            for(unsigned int j = 0 ; !found && (j < activesContacts.size()) ; ++j)
+            // check if all the required limbs appeared in the actives contacts set
+            bool reqLimValid(true);
+            std::vector <std::string> reqLimbs(contactGenHelper.fullBody_->getRequiredLimbs());
+            for(unsigned int i = 0 ; reqLimValid && (i < reqLimbs.size()) ; ++i)
             {
-                if(reqLimbs[i] == activesContacts[j])
-                    found = true;
+                bool found(false);
+                for(unsigned int j = 0 ; !found && (j < activesContacts.size()) ; ++j)
+                {
+                    if(reqLimbs[i] == activesContacts[j])
+                        found = true;
+                }
+                if(!found)
+                    reqLimValid = false;
             }
-            if(!found)
-                reqLimValid = false;
+            // if yes, keep this ContactState
+            if(reqLimValid)
+            {
+                candidates_tmp.push(current);
+            }
+            // remove the current ContactState of the queue
+            candidates.pop();
         }
-        // if yes, keep this ContactState
-        if(reqLimValid)
+        else
         {
-            candidates_tmp.push(current);
+            //Enhanced version for the required contacts checking
+            ContactState current = candidates.front();
+            std::vector <std::string> reqLimbs(contactGenHelper.fullBody_->getRequiredLimbs());
+            bool reqLimValid(true);
+            // For each required limbs, checks if its active value in the contacts map is not to false
+            std::cout << "nbContacts : " << current.first.contacts_.size() << std::endl;
+            for(unsigned int i = 0 ; reqLimValid && (i < reqLimbs.size()) ; ++i)
+            {
+                //std::cout << "Iteration : " << i << " --- " << "Limb : " << reqLimbs[i] << std::endl;
+                if(current.first.contacts_.at(reqLimbs[i]) == false)
+                    reqLimValid = false;
+            }
+            if(reqLimValid)
+            {
+                candidates_tmp.push(current);
+            }
+            candidates.pop();
         }
-        // remove the current ContactState of the queue
-        candidates.pop();
     }
     candidates = candidates_tmp;
     while(!candidates.empty() && !rep.success_)
