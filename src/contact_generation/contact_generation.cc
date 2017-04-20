@@ -447,7 +447,7 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
         /*
             * When the bug of the contacts map will be solved, remove the mode 0 and keep only the good one (enhanced version)
             * The mode 0 is not optimal in terms of complexity but allows us to avoid a crash (due to the inexistence of a required contact in the map)
-            * The enhanced mode throws a out-of-range exception when we have required contacts because of the contacts map bug (some contacts disappeared unexpectedly in the map)
+            * The enhanced mode throws an out-of-range exception when we have required contacts because of the contacts map bug (some contacts disappeared unexpectedly in the map)
         */
         int mode(0); // contact checking mode : mode == 0 --> normal, mode != 0 --> enhanced version
         if(mode == 0)
