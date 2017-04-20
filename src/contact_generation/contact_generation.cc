@@ -494,7 +494,6 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
             std::cout << "nbContacts : " << current.first.contacts_.size() << std::endl;
             for(unsigned int i = 0 ; reqLimValid && (i < reqLimbs.size()) ; ++i)
             {
-                //std::cout << "Iteration : " << i << " --- " << "Limb : " << reqLimbs[i] << std::endl;
                 if(current.first.contacts_.at(reqLimbs[i]) == false)
                     reqLimValid = false;
             }
