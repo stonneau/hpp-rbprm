@@ -455,6 +455,8 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
             // get the actives contacts in the state in the current ContactState
             std::vector <std::string> activesContacts;
             ContactState current = candidates.front();
+            //std::cout << "Number of known contacts : " << current.first.contacts_.size() << std::endl;
+            //std::cout << "---------------- Contact order size : " << current.first.contactOrder_.size() << std::endl;
             for(std::map<std::string, bool>::const_iterator cit = current.first.contacts_.begin(); cit != current.first.contacts_.end(); ++cit)
             {
                 if(cit->second == true)
@@ -491,7 +493,6 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
             std::vector <std::string> reqLimbs(contactGenHelper.fullBody_->getRequiredLimbs());
             bool reqLimValid(true);
             // For each required limbs, checks if its active value in the contacts map is not to false
-            std::cout << "nbContacts : " << current.first.contacts_.size() << std::endl;
             for(unsigned int i = 0 ; reqLimValid && (i < reqLimbs.size()) ; ++i)
             {
                 if(current.first.contacts_.at(reqLimbs[i]) == false)
