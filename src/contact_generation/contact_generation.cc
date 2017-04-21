@@ -442,6 +442,7 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
     T_ContactState candidates = gen_contacts_combinatorial(contactGenHelper);
     //remove candidates which not respect the required limbs in contact
     T_ContactState candidates_tmp;
+    std::vector <std::string> reqLimbs(contactGenHelper.fullBody_->getRequiredLimbs());
     while(!candidates.empty())
     {
         /*
@@ -466,7 +467,6 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
             }
             // check if all the required limbs appeared in the actives contacts set
             bool reqLimValid(true);
-            std::vector <std::string> reqLimbs(contactGenHelper.fullBody_->getRequiredLimbs());
             for(unsigned int i = 0 ; reqLimValid && (i < reqLimbs.size()) ; ++i)
             {
                 bool found(false);
@@ -490,7 +490,6 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
         {
             //Enhanced version for the required contacts checking
             ContactState current = candidates.front();
-            std::vector <std::string> reqLimbs(contactGenHelper.fullBody_->getRequiredLimbs());
             bool reqLimValid(true);
             // For each required limbs, checks if its active value in the contacts map is not to false
             for(unsigned int i = 0 ; reqLimValid && (i < reqLimbs.size()) ; ++i)
