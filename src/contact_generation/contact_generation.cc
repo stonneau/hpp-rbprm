@@ -451,6 +451,7 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
         if(cState.second.empty() && (contactGenHelper.workingState_.stable || (stability::IsStable(contactGenHelper.fullBody_,contactGenHelper.workingState_) > contactGenHelper.robustnessTreshold_ )) )
         {
             bool reqLimValid(true);
+            // check if all required contacts are active
             for(unsigned int i = 0 ; reqLimValid && (i < reqLimbs.size()) ; ++i)
             {
                 if(contactGenHelper.workingState_.contactPositions_.count(reqLimbs[i]) == 0)
