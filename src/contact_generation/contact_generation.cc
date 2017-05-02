@@ -456,9 +456,23 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
             {
                 if(contactGenHelper.workingState_.contactPositions_.count(reqLimbs[i]) == 0)
                     reqLimValid = false;
-            }
-            //if(contactGenHelper.workingState_.nbContacts > 3)
-            if(reqLimValid)
+            }            
+            // get the CoM position
+            contactGenHelper.fullBody_->device_->computeForwardKinematics();
+            fcl::Vec3f comPosition(contactGenHelper.fullBody_->device_->positionCenterOfMass());
+            // parameters to be tuned
+            stability::GCRParam config;
+            config.edge_ = 0.8;
+            config.groundThreshold_ = 0.01;
+            config.step1Threshold_ = 0.1;
+            config.step2Threshold_ = 0.1;
+            // compute the GCR test
+            bool GCRValid(stability::GCRValidation(contactGenHelper.workingState_, comPosition, config));
+            double GCRCost(stability::GCREvaluation(contactGenHelper.workingState_, comPosition, config));
+            bool costEvalSuccess(GCRCost < (config.step1Threshold_ + config.step2Threshold_));
+
+            // if all required contacts are active and the GCR criterion is valid or accepted
+            if(reqLimValid && (GCRValid || costEvalSuccess))
             {
                 rep.result_ = contactGenHelper.workingState_;
                 rep.status_ = NO_CONTACT;
