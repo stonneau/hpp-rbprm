@@ -84,6 +84,10 @@ namespace hpp {
       double groundThreshold_; // distance from the ground plane under which we will consider a contact as a ground contact (and perform its orthogonal projection in the ground plane)
       double step1Threshold_; // maximum error accepted on the distance between the CoM projection and the support polygon center
       double step2Threshold_; // maximum error accepted on the distance of each limb to the support polygon center
+      GCRParam() : edge_(-1.0), groundThreshold_(-1.0), step1Threshold_(-1.0), step2Threshold_(-1.0) {} // negative values in order to say that the attributes have to be settled
+      GCRParam(double e, double g, double s1, double s2) : edge_(e), groundThreshold_(g), step1Threshold_(s1), step2Threshold_(s2) {}
+      GCRParam(const GCRParam & p) : edge_(p.edge_), groundThreshold_(p.groundThreshold_), step1Threshold_(p.step1Threshold_), step2Threshold_(p.step2Threshold_) {}
+      GCRParam & operator=(const GCRParam & p);
     };
 
     /// Performs the 2-steps Ground Contacts Relevance criterion validation

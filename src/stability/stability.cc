@@ -278,6 +278,17 @@ const fcl::Vec3f comfcl = comcptr->com();*/
         }
         return *this;
     }
+    GCRParam & GCRParam::operator=(const GCRParam & p)
+    {
+        if(this != &p)
+        {
+            this->edge_ = p.edge_;
+            this->groundThreshold_ = p.groundThreshold_;
+            this->step1Threshold_ = p.step1Threshold_;
+            this->step2Threshold_ = p.step2Threshold_;
+        }
+        return *this;
+    }
     Plane compute_ground_horizontal_plane(const std::map<std::string, fcl::Vec3f> & contactsPositions)
     {
         // find the lowest contact through which the ground plane will pass
