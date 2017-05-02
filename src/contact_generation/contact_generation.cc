@@ -336,6 +336,8 @@ hpp::rbprm::State findValidCandidate(const ContactGenHelper &contactGenHelper, c
     core::Configuration_t moreRobust, configuration;
     configuration = current.configuration_;
     double maxRob = -std::numeric_limits<double>::max();
+    //double minCost = std::numeric_limits<double>::max();
+    //stability::GCRParam config(0.8, 0.01, 0.1, 0.1);
     sampling::T_OctreeReport::const_iterator it = finalSet.begin();
     fcl::Vec3f position, normal;
     fcl::Matrix3f rotation;
@@ -347,11 +349,19 @@ hpp::rbprm::State findValidCandidate(const ContactGenHelper &contactGenHelper, c
         if(rep.success_)
         {
             double robustness = stability::IsStable(contactGenHelper.fullBody_,rep.result_);
-            if(    !contactGenHelper.checkStabilityGenerate_
+
+            /*contactGenHelper.fullBody_->device_->computeForwardKinematics();
+            fcl::Vec3f comPosition(contactGenHelper.fullBody_->device_->positionCenterOfMass());
+            bool GCRValid(stability::GCRValidation(rep.result_, comPosition, config));
+            double GCRCost(stability::GCREvaluation(rep.result_, comPosition, config));
+            bool costEvalSuccess(GCRCost <= (config.step1Threshold_ + config.step2Threshold_));*/
+
+            if((    !contactGenHelper.checkStabilityGenerate_
                 || (rep.result_.nbContacts == 1 && !contactGenHelper.stableForOneContact_)
-                || robustness>=contactGenHelper.robustnessTreshold_)
+                || robustness>=contactGenHelper.robustnessTreshold_) /*&& (GCRValid || costEvalSuccess)*/)
             {
                 maxRob = std::max(robustness, maxRob);
+                //minCost = std::min(GCRCost, minCost);
                 position = limb->effector_->currentTransformation().getTranslation();
                 rotation = limb->effector_->currentTransformation().getRotation();
                 normal = rep.result_.contactNormals_.at(limbId);
@@ -359,10 +369,11 @@ hpp::rbprm::State findValidCandidate(const ContactGenHelper &contactGenHelper, c
             }
             // if no stable candidate is found, select best contact
             // anyway
-            else if((robustness > maxRob) && contactGenHelper.contactIfFails_)
+            else if((robustness > maxRob) && /*(GCRCost < minCost) &&*/ contactGenHelper.contactIfFails_)
             {
                 moreRobust = configuration;
                 maxRob = robustness;
+                //minCost = GCRCost;
                 position = limb->effector_->currentTransformation().getTranslation();
                 rotation = limb->effector_->currentTransformation().getRotation();
                 normal = rep.result_.contactNormals_.at(limbId);
@@ -457,7 +468,7 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
                 if(contactGenHelper.workingState_.contactPositions_.count(reqLimbs[i]) == 0)
                     reqLimValid = false;
             }            
-            // get the CoM position
+            /*// get the CoM position
             contactGenHelper.fullBody_->device_->computeForwardKinematics();
             fcl::Vec3f comPosition(contactGenHelper.fullBody_->device_->positionCenterOfMass());
             // parameters to be tuned
@@ -469,10 +480,10 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
             // compute the GCR test
             bool GCRValid(stability::GCRValidation(contactGenHelper.workingState_, comPosition, config));
             double GCRCost(stability::GCREvaluation(contactGenHelper.workingState_, comPosition, config));
-            bool costEvalSuccess(GCRCost < (config.step1Threshold_ + config.step2Threshold_));
+            bool costEvalSuccess(GCRCost <= (config.step1Threshold_ + config.step2Threshold_));*/
 
             // if all required contacts are active and the GCR criterion is valid or accepted
-            if(reqLimValid && (GCRValid || costEvalSuccess))
+            if(reqLimValid /*&& (GCRValid || costEvalSuccess)*/)
             {
                 rep.result_ = contactGenHelper.workingState_;
                 rep.status_ = NO_CONTACT;
