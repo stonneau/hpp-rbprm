@@ -457,7 +457,7 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
                 if(contactGenHelper.workingState_.contactPositions_.count(reqLimbs[i]) == 0)
                     reqLimValid = false;
             }
-            //if(contactGenHelper.workingState_.nbContacts > 3)
+
             if(reqLimValid)
             {
                 rep.result_ = contactGenHelper.workingState_;
