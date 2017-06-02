@@ -27,6 +27,7 @@ SET(${LIBRARY_NAME}_SOURCES
 	rbprm-limb.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/rbprm-limb.hh
         ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/interpolation/time-dependant.hh
         ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/interpolation/interpolation-constraints.hh
+        interpolation/interpolation-constraints.cc
         ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/interpolation/time-constraint-helper.hh
         ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/interpolation/time-constraint-helper.inl
         ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/interpolation/time-constraint-utils.hh
@@ -37,6 +38,7 @@ SET(${LIBRARY_NAME}_SOURCES
         interpolation/com-rrt-shooter.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/interpolation/com-rrt-shooter.hh
 				projection/projection.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/projection/projection.hh
 				contact_generation/contact_generation.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/contact_generation/contact_generation.hh
+        ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/reports.hh
 				contact_generation/algorithm.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/contact_generation/algorithm.hh
         ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/interpolation/limb-rrt.hh
         interpolation/limb-rrt.cc

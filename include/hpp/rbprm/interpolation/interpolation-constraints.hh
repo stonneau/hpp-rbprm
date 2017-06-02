@@ -61,7 +61,7 @@ namespace interpolation {
           constraints::value_type unNormalized = (tR.second-tR.first)* normalized_input + tR.first;
           if(times_ten_)
           {
-              output = ref_->operator ()(unNormalized).head(dim_) * (10000) ;
+              output = ref_->operator ()(unNormalized).head(dim_); // * (10000) ;
           }
           else
           {
@@ -89,9 +89,9 @@ namespace interpolation {
         comComp->add (device->rootJoint());
         comComp->computeMass ();
         PointComFunctionPtr_t comFunc = PointComFunction::create ("COM-walkgen",
-            device, 10000 * PointCom::create (comComp));
+            device, /*10000 **/ PointCom::create (comComp));
         NumericalConstraintPtr_t comEq = NumericalConstraint::create (comFunc, equals);
-        comEq->nonConstRightHandSide() = initTarget * 10000;
+        comEq->nonConstRightHandSide() = initTarget; // * 10000;
         proj->add(comEq);
         proj->updateRightHandSide();
         helper.steeringMethod_->tds_.push_back(TimeDependant(comEq, boost::shared_ptr<VecRightSide<Reference> >(new VecRightSide<Reference> (ref, 3, true))));
@@ -185,31 +185,14 @@ namespace interpolation {
     }
 
 
+    void addContactConstraints(rbprm::RbPrmFullBodyPtr_t fullBody, model::DevicePtr_t device, core::ConfigProjectorPtr_t projector, const State& state, const std::vector<std::string> active);
+
     template<class Helper_T>
     void CreateContactConstraints(Helper_T& helper, const State& from, const State& to)
     {
-        std::vector<bool> cosntraintsR = setMaintainRotationConstraints();
-        std::vector<std::string> fixed = to.fixedContacts(from);
         model::DevicePtr_t device = helper.rootProblem_.robot();
-
-        for(std::vector<std::string>::const_iterator cit = fixed.begin();
-            cit != fixed.end(); ++cit)
-        {
-            RbPrmLimbPtr_t limb = helper.fullbody_->GetLimbs().at(*cit);
-            const fcl::Vec3f& ppos  = from.contactPositions_.at(*cit);
-            const fcl::Matrix3f& rotation = from.contactRotation_.at(*cit);
-            JointPtr_t effectorJoint = device->getJointByName(limb->effector_->name());
-            helper.proj_->add(core::NumericalConstraint::create (
-                                    constraints::deprecated::Position::create("",device,
-                                                                  effectorJoint,fcl::Vec3f(0,0,0), ppos)));
-            if(limb->contactType_ == hpp::rbprm::_6_DOF)
-            {
-                helper.proj_->add(core::NumericalConstraint::create (constraints::deprecated::Orientation::create("", device,
-                                                                                  effectorJoint,
-                                                                                  rotation,
-                                                                                  cosntraintsR)));
-            }
-        }
+        std::vector<std::string> fixed = to.fixedContacts(from);
+        addContactConstraints(helper.fullbody_, device, helper.proj_,from,fixed);
     }
 
 

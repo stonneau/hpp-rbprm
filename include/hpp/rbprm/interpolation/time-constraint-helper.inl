@@ -27,6 +27,7 @@
 #include <hpp/core/problem-target/goal-configurations.hh>
 #include <hpp/core/bi-rrt-planner.hh>
 #include <hpp/core/random-shortcut.hh>
+#include <hpp/core/path-optimization/partial-shortcut.hh>
 #include <hpp/core/constraint-set.hh>
 #include <hpp/constraints/generic-transformation.hh>
 #include <hpp/constraints/position.hh>
@@ -105,16 +106,15 @@ namespace
 
     inline void DisableUnNecessaryCollisions(core::Problem& problem, const std::vector<std::string>& variations,  const rbprm::T_Limb& limbs)
     {
-        // TODO should we really disable collisions for other bodies ?
-        tools::RemoveNonLimbCollisionRec<core::Problem>(problem.robot()->rootJoint(),
-                                                        //"all",
-                                                        variations,
-                                                        problem.collisionObstacles(),problem);
+        std::vector<std::string> jointNamesVariations;
 
         for(std::vector<std::string>::const_iterator cit = variations.begin();
                                 cit != variations.end(); ++cit)
         {
             rbprm::RbPrmLimbPtr_t limb = limbs.at(*cit);
+
+            jointNamesVariations.push_back(limb->limb_->name());
+
             if(limb->disableEndEffectorCollision_)
             {
                 hpp::tools::RemoveEffectorCollision<core::Problem>(problem,
@@ -122,6 +122,12 @@ namespace
                                                                    problem.collisionObstacles());
             }
         }
+
+        // TODO should we really disable collisions for other bodies ?
+        tools::RemoveNonLimbCollisionRec<core::Problem>(problem.robot()->rootJoint(),
+                                                        jointNamesVariations,
+                                                        problem.collisionObstacles(),problem);
+
     }
 
     inline core::PathPtr_t generateRootPath(const core::Problem& problem, const State& from, const State& to)
@@ -180,6 +186,11 @@ namespace
             for(std::size_t j=0; j<numOptimizations;++j)
             {
                 partialPath = rs->optimize(partialPath);
+            }
+            core::pathOptimization::PartialShortcutPtr_t rs2 = core::pathOptimization::PartialShortcut::create(helper.rootProblem_);
+            for(std::size_t j=0; j<numOptimizations;++j)
+            {
+                partialPath = rs2->optimize(partialPath);
             }
             return partialPath;
         }
