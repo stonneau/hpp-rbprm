@@ -157,7 +157,7 @@ namespace hpp {
 
     void RbPrmFullBody::printRequiredLimbs() const
     {
-        for(int i=0; i < requiredLimbs_.size(); ++i)
+        for(unsigned int i=0; i < requiredLimbs_.size(); ++i)
         {
             std::cout << requiredLimbs_[i] << std::endl;
         }
