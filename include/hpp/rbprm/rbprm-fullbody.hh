@@ -112,6 +112,8 @@ namespace hpp {
         const core::CollisionValidationPtr_t& GetCollisionValidation() {return collisionValidation_;}
         const std::map<std::string, core::CollisionValidationPtr_t>& GetLimbCollisionValidation() {return limbcollisionValidations_;}
         const model::DevicePtr_t device_;
+        const model::ConfigurationPtr_t referenceConfig(){return referenceConfig_;}
+        void referenceConfig(model::ConfigurationPtr_t referenceConfig){referenceConfig_=referenceConfig;}
 
     private:
         core::CollisionValidationPtr_t collisionValidation_;
@@ -119,6 +121,7 @@ namespace hpp {
         rbprm::T_Limb limbs_;
         T_LimbGroup limbGroups_;
         sampling::HeuristicFactory factory_;
+        model::ConfigurationPtr_t referenceConfig_;
 
     private:
         void AddLimbPrivate(rbprm::RbPrmLimbPtr_t limb, const std::string& id, const std::string& name,
