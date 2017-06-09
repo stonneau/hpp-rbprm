@@ -54,7 +54,7 @@ hpp::rbprm::State HPP_RBPRM_DLLAPI ComputeContacts(
   const hpp::rbprm::RbPrmFullBodyPtr_t& body, model::ConfigurationIn_t configuration,
   const affMap_t& affordances,
   const std::map<std::string, std::vector<std::string> >& affFilters, const fcl::Vec3f& direction,
-  const double robustnessTreshold = 0);
+  const double robustnessTreshold = 0, const fcl::Vec3f& acceleration = fcl::Vec3f(0,0,0));
 
 /// Generates a balanced contact configuration, considering the
 /// given current configuration of the robot, and a previous, balanced configuration.
@@ -75,7 +75,7 @@ hpp::rbprm::contact::ContactReport HPP_RBPRM_DLLAPI ComputeContacts(
         model::ConfigurationIn_t configuration,
             const affMap_t& affordances,
         const std::map<std::string, std::vector<std::string> >& affFilters, const fcl::Vec3f& direction,
-  const double robustnessTreshold = 0);
+  const double robustnessTreshold = 0,const fcl::Vec3f& acceleration = fcl::Vec3f(0,0,0));
 
 
     } // namespace contact

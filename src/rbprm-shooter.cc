@@ -14,6 +14,7 @@
 // received a copy of the GNU Lesser General Public License along with
 // hpp-rbprm. If not, see <http://www.gnu.org/licenses/>.
 
+#include <hpp/core/collision-validation-report.hh>
 #include <hpp/rbprm/rbprm-shooter.hh>
 #include <hpp/model/collision-object.hh>
 #include <hpp/model/joint.hh>
@@ -21,7 +22,7 @@
 #include <hpp/fcl/BVH/BVH_model.h>
 #include <hpp/core/collision-validation.hh>
 #include <Eigen/Geometry>
-
+#include <hpp/model/configuration.hh>
 
 namespace hpp {
 using namespace core;
@@ -177,12 +178,37 @@ namespace
                                             const std::map<std::string, std::vector<std::string> >& affFilters,
                                             const std::size_t shootLimit, const std::size_t displacementLimit)
     {
-        srand ((unsigned int)(time(NULL)));
-        RbPrmShooter* ptr = new RbPrmShooter (robot, geometries, affordances,
-					filter, affFilters, shootLimit, displacementLimit);
-        RbPrmShooterPtr_t shPtr (ptr);
-        ptr->init (shPtr);
-        return shPtr;
+      unsigned int seed = (unsigned int)(time(NULL));
+      // seed = 1484926006 ;
+      //seed = 1485276927;
+      //seed = 1485359407; //darpa
+      // seed = 1485441926 ; // prepare_jump
+      // seed = 1485973442 ; // stair bauzil (old)
+      // seed = 1486137883; // stair bauzil (new, better) interpolation don't work, too far from ramp
+     //  seed = 1486140324; // stair bauzil NOT WORKING ??
+    // seed = 1486140446; // stair bauzil : work with extract path but not the interpolation (best on yet)
+    //  seed = 1486403996; // sideWall
+     //  seed = 1486557940; // downSlope, lent ( + 5min mais fonctionne) (minz = 0.3)
+       // seed = 1486560453; // downSlop minz = 0.45 (20min)
+      // seed = 1486564172 ; // downSlop minz = 0.45 (20min)
+      //seed = 1486643780; // downSlope HyQ_large
+      // seed = 1486657707 ; // downSlope hrp2
+      // seed = 1487238007; // slalom hyq v=1
+     //seed = 1487348584 ; // hyq slalom v = 0.5
+     // seed = 1488288253; // detour  kino
+      //seed = 1488449318; // downSLope (close to ground ... )
+      //seed = 1492696043; // bug stairs
+      seed = 149277557 ; // stairs (work)
+      srand (seed);
+      hppDout(notice,"&&&&&& SEED = "<<seed);
+      std::cout<<"seed = "<<seed<<std::endl;
+      RbPrmShooter* ptr = new RbPrmShooter (robot, geometries, affordances,
+                                            filter, affFilters, shootLimit, displacementLimit);
+
+
+      RbPrmShooterPtr_t shPtr (ptr);
+      ptr->init (shPtr);
+      return shPtr;
     }
 
     void RbPrmShooter::init (const RbPrmShooterPtr_t& self)
@@ -274,6 +300,7 @@ namespace
 
 hpp::core::ConfigurationPtr_t RbPrmShooter::shoot () const
 {
+    hppDout(notice,"!!! Random shoot");
     JointVector_t jv = robot_->getJointVector ();
     ConfigurationPtr_t config (new Configuration_t (robot_->Device::currentConfiguration()));
     std::size_t limit = shootLimit_;
@@ -304,9 +331,10 @@ hpp::core::ConfigurationPtr_t RbPrmShooter::shoot () const
         Vec3f lastDirection(1,0,0);
         while(!found && limitDis >0)
         {
-            bool valid = validator_->trunkValidation_->validate(*config, reportShPtr);
+            bool valid = validator_->validateTrunk(*config, reportShPtr);
+            found = valid && validator_->validateRoms(*config, filter_,reportShPtr);
             CollisionValidationReport* report = static_cast<CollisionValidationReport*>(reportShPtr.get());
-            found = valid && validator_->validateRoms(*config, filter_);
+
             if(valid &!found)
             {
                 // try to rotate to reach rom
@@ -336,7 +364,6 @@ hpp::core::ConfigurationPtr_t RbPrmShooter::shoot () const
                  limitDis--;
             }
         }
-
         // Shoot extra configuration variables
         size_type extraDim = robot_->extraConfigSpace ().dimension ();
         size_type offset = robot_->configSize () - extraDim;
@@ -353,11 +380,18 @@ hpp::core::ConfigurationPtr_t RbPrmShooter::shoot () const
                 oss << i << ". min = " << ", max = " << upper << std::endl;
                 throw std::runtime_error (oss.str ());
             }
-            (*config) [offset + i] = (upper - lower) * rand ()/RAND_MAX;
+            (*config) [offset + i] = lower + (upper - lower) * rand ()/RAND_MAX;
         }
+        // save the normal (code from Mylène)
+       /* if(extraDim >= 3 ){
+          size_type index = robot_->configSize() -3;  // rempli toujours les 3 derniers
+          for (size_type i=0; i<3; ++i)
+            (*config) [index + i] = lastDirection [i];
+        }*/
         limit--;
     }
     if (!found) std::cout << "no config found" << std::endl;
+    hppDout(info,"shoot : "<<model::displayConfig(*config));
     return config;
 }
 

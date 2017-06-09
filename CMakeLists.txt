@@ -87,6 +87,8 @@ SET(${PROJECT_NAME}_HEADERS
     include/hpp/rbprm/rbprm-shooter.hh
     include/hpp/rbprm/rbprm-state.hh
     include/hpp/rbprm/rbprm-validation.hh
+    include/hpp/rbprm/rbprm-validation-report.hh
+    include/hpp/rbprm/rbprm-path-validation.hh
     include/hpp/rbprm/rbprm-rom-validation.hh
     include/hpp/rbprm/sampling/sample.hh
     include/hpp/rbprm/sampling/sample-db.hh
@@ -99,12 +101,29 @@ SET(${PROJECT_NAME}_HEADERS
     include/hpp/rbprm/rbprm-profiler.hh
     include/utils/Stdafx.hh
     include/utils/stop-watch.hh
+#    include/hpp/rbprm/planner/parabola-planner.hh
+    include/hpp/rbprm/planner/dynamic-planner.hh
+    include/hpp/rbprm/planner/steering-dynamic.hh
+    include/hpp/rbprm/planner/parabola-path.hh
+    include/hpp/rbprm/planner/timed-parabola-path.hh
+    include/hpp/rbprm/planner/steering-method-parabola.hh
+    include/hpp/rbprm/planner/rbprm-node.hh
+    include/hpp/rbprm/planner/rbprm-roadmap.hh
+    include/hpp/rbprm/planner/rbprm-steering-kinodynamic.hh
+    include/utils/algorithms.h
+    include/hpp/rbprm/dynamic/dynamic-validation.hh
+    include/hpp/rbprm/dynamic/dynamic-path-validation.hh
   )
 
 # Activate hpp-util logging if requested
 SET (HPP_DEBUG FALSE CACHE BOOL "trigger hpp-util debug output")
 IF (HPP_DEBUG)
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHPP_DEBUG")
+ENDIF()
+# Activate hpp-util logging if requested
+SET (HPP_BENCHMARK FALSE CACHE BOOL "trigger hpp-util benchmark output")
+IF (HPP_BENCHMARK)
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DHPP_ENABLE_BENCHMARK")
 ENDIF()
 
 ADD_SUBDIRECTORY(src)

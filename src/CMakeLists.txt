@@ -22,6 +22,7 @@ SET(LIBRARY_NAME ${PROJECT_NAME})
 SET(${LIBRARY_NAME}_SOURCES
 	rbprm-shooter.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/rbprm-shooter.hh
 	rbprm-validation.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/rbprm-validation.hh
+  rbprm-path-validation.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/rbprm-path-validation.hh
         rbprm-rom-validation.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/rbprm-rom-validation.hh
 	rbprm-device.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/rbprm-device.hh
 	rbprm-limb.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/rbprm-limb.hh
@@ -60,7 +61,18 @@ SET(${LIBRARY_NAME}_SOURCES
         stability/support.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/stability/support.hh
         ik-solver.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/ik-solver.hh
         utils/stop-watch.cc ${PROJECT_SOURCE_DIR}/include/utils/stop-watch.hh
+        utils/algorithms.cc ${PROJECT_SOURCE_DIR}/include/utils/algorithms.h
         rbprm-profiler.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/rbprm-profiler.hh
+#        planner/parabola-planner.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/planner/parabola-planner.hh
+        planner/steering-dynamic.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/planner/steering-dynamic.hh
+        planner/steering-method-parabola.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/planner/steering-method-parabola.hh
+        planner/parabola-path.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/planner/parabola-path.hh
+        planner/timed-parabola-path.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/planner/timed-parabola-path.hh
+        planner/dynamic-planner.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/planner/dynamic-planner.hh
+        planner/rbprm-steering-kinodynamic.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/planner/rbprm-steering-kinodynamic.hh
+        planner/rbprm-node.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/planner/rbprm-node.hh
+        dynamic/dynamic-validation.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/dynamic/dynamic-validation.hh
+        dynamic/dynamic-path-validation.cc ${PROJECT_SOURCE_DIR}/include/hpp/rbprm/dynamic/dynamic-path-validation.hh
   )
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/src)

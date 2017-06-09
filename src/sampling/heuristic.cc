@@ -71,7 +71,17 @@ double BackwardHeuristic(const sampling::Sample& sample,
 double StaticHeuristic(const sampling::Sample& sample,
                       const Eigen::Vector3d& /*direction*/, const Eigen::Vector3d& /*normal*/)
 {
+    /*hppDout(info,"sample : ");
+    hppDout(info,"sample : "<<&sample);
+    hppDout(info,"id = "<<sample.id_);
+    hppDout(info,"length = "<<sample.length_);
+    hppDout(info,"startRank = "<<sample.startRank_);
+    hppDout(info,"effectorPosition = "<<sample.effectorPosition_);
+    hppDout(info,"configuration = "<<sample.configuration_);
+    hppDout(info,"staticValue = "<<sample.staticValue_);
+    */
     return sample.staticValue_;
+
 }
 
 
@@ -84,7 +94,22 @@ double DistanceToLimitHeuristic(const sampling::Sample& sample,
 
 HeuristicFactory::HeuristicFactory()
 {
-    srand ( (unsigned int) (time(NULL)) );
+    unsigned int seed =  (unsigned int) (time(NULL)) ;
+    //seed = 1485441926; // prepare_jump
+    // seed = 1486147856; // stairs (18)
+    //seed = 1486392757; // sideWall HyQ
+    // seed = 1486721923; //hrp2 downSLope
+   // seed = 1487082431; // hrp2 +0.15 z axis
+    //seed = 1488532591; // downSLope (good contact but not interp) (yaml 1)
+    // seed = 1488545915 ; //downSlope (need test)
+    // seed = 1488550692 ; // downslope 2
+    seed = 1491571994; // straight walk 2 m static
+    //seed = 1491580336 ; // straight walk dynamic 0.5
+    //seed = 1492176551; // walk 0.3 !!
+    //seed = 1493208163 ; // stairs static contacts
+    std::cout<<"seed = "<<seed<<std::endl;
+    srand ( seed);
+    hppDout(notice,"SEED for heuristic = "<<seed);
     heuristics_.insert(std::make_pair("static", &StaticHeuristic));
     heuristics_.insert(std::make_pair("EFORT", &EFORTHeuristic));
     heuristics_.insert(std::make_pair("EFORT_Normal", &EFORTNormalHeuristic));

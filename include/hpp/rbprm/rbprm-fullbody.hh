@@ -22,7 +22,6 @@
 #include <hpp/rbprm/config.hh>
 #include <hpp/rbprm/rbprm-state.hh>
 #include <hpp/model/device.hh>
-#include <hpp/model/fwd.hh>
 #include <hpp/rbprm/rbprm-limb.hh>
 #include <hpp/core/collision-validation.hh>
 #include <hpp/rbprm/sampling/heuristic.hh>
@@ -112,6 +111,12 @@ namespace hpp {
         const core::CollisionValidationPtr_t& GetCollisionValidation() {return collisionValidation_;}
         const std::map<std::string, core::CollisionValidationPtr_t>& GetLimbCollisionValidation() {return limbcollisionValidations_;}
         const model::DevicePtr_t device_;
+        void staticStability(bool staticStability){staticStability_ = staticStability;}
+        const bool staticStability(){return staticStability_;}
+        const double getFriction(){return mu_;}
+        void setFriction(double mu){mu_ = mu;}
+        const model::ConfigurationPtr_t referenceConfig(){return referenceConfig_;}
+        void referenceConfig(model::ConfigurationPtr_t referenceConfig){referenceConfig_=referenceConfig;}
 
     private:
         core::CollisionValidationPtr_t collisionValidation_;
@@ -119,6 +124,9 @@ namespace hpp {
         rbprm::T_Limb limbs_;
         T_LimbGroup limbGroups_;
         sampling::HeuristicFactory factory_;
+        bool staticStability_;
+        double mu_;
+        model::ConfigurationPtr_t referenceConfig_;
         unsigned short maxContactBreaks_;
         std::vector <std::string> requiredLimbs_;
 

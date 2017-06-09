@@ -28,7 +28,7 @@
 #include <hpp/core/locked-joint.hh>
 #include <hpp/model/device.hh>
 #include <hpp/constraints/generic-transformation.hh>
-
+#include <hpp/model/configuration.hh>
 #include <hpp/fcl/BVH/BVH_model.h>
 
 #include <stack>
@@ -151,6 +151,8 @@ namespace hpp {
     RbPrmFullBody::RbPrmFullBody (const model::DevicePtr_t& device)
         : device_(device), maxContactBreaks_(2)
         , collisionValidation_(core::CollisionValidation::create(device))
+        , staticStability_(true)
+        , mu_(0.5)
         , weakPtr_()
     {
         // NOTHING

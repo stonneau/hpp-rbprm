@@ -56,17 +56,24 @@ namespace hpp {
       /// \retval validationReport report on validation (used only for rom shape). This parameter will
       ///         dynamically cast into CollisionValidationReport type,
       /// \return whether the whole config is valid.
-      virtual bool validate (const core::Configuration_t& config,
-                 core::ValidationReportPtr_t& validationReport);
+      virtual bool validate (const core::Configuration_t& config, core::ValidationReportPtr_t& validationReport);
+
+      /// Rearrange the collisions pairs of all configValidation in a random manner
+      /// \brief randomnizeCollisionPairs
+      ///
+      virtual void randomnizeCollisionPairs();
 
     public:
       const std::vector<std::string> filter_;
 
+      void setOptional(bool optional){optional_ = optional;}
     protected:
       RbPrmRomValidation (const model::DevicePtr_t &robot,
                        const std::vector<std::string>& affFilters);
     private:
       core::ValidationReportPtr_t unusedReport_;
+      bool optional_;
+
     }; // class RbPrmValidation
     /// \}
   } // namespace rbprm

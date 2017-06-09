@@ -1,20 +1,22 @@
-// Copyright (c) 2014, LAAS-CNRS
-// Authors: Steve Tonneau (steve.tonneau@laas.fr)
 //
-// This file is part of hpp-rbprm.
-// hpp-rbprm is free software: you can redistribute it
+// Copyright (c) 2017 CNRS
+// Authors: Fernbach Pierre
+//
+// This file is part of hpp-rbprm
+// hpp-core is free software: you can redistribute it
 // and/or modify it under the terms of the GNU Lesser General Public
 // License as published by the Free Software Foundation, either version
 // 3 of the License, or (at your option) any later version.
 //
-// hpp-rbprm is distributed in the hope that it will be
+// hpp-core is distributed in the hope that it will be
 // useful, but WITHOUT ANY WARRANTY; without even the implied warranty
 // of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // General Lesser Public License for more details.  You should have
 // received a copy of the GNU Lesser General Public License along with
-// hpp-rbprm. If not, see <http://www.gnu.org/licenses/>.
+// hpp-core  If not, see
+// <http://www.gnu.org/licenses/>.
 
-#include <hpp/rbprm/rbprm-path-validation.hh>
+#include <hpp/rbprm/dynamic/dynamic-path-validation.hh>
 #include <hpp/core/path.hh>
 #include <hpp/rbprm/rbprm-validation.hh>
 #include <hpp/core/config-validation.hh>
@@ -22,38 +24,45 @@
 #include <hpp/core/path-validation-report.hh>
 #include <hpp/core/validation-report.hh>
 #include <hpp/core/collision-path-validation-report.hh>
+#include <hpp/util/debug.hh>
+#include <hpp/model/configuration.hh>
 
-
-namespace hpp{
+namespace hpp {
   namespace rbprm {
-
     using core::value_type;
     using core::Configuration_t;
 
-    RbPrmPathValidationPtr_t RbPrmPathValidation::create (const core::DevicePtr_t& robot, const core::value_type& stepSize)
+
+
+
+    DynamicPathValidationPtr_t DynamicPathValidation::create (const core::DevicePtr_t& robot, const core::value_type& stepSize)
     {
-      RbPrmPathValidation* ptr (new RbPrmPathValidation(robot, stepSize));
-      RbPrmPathValidationPtr_t shPtr (ptr);
+      DynamicPathValidation* ptr (new DynamicPathValidation(robot, stepSize));
+      DynamicPathValidationPtr_t shPtr (ptr);
       return shPtr;
     }
 
 
-    RbPrmPathValidation::RbPrmPathValidation(const core::DevicePtr_t &robot, const core::value_type &stepSize) :
-      core::DiscretizedPathValidation(robot,stepSize)
+    DynamicPathValidation::DynamicPathValidation(const core::DevicePtr_t &robot, const core::value_type &stepSize) :
+      RbPrmPathValidation(robot,stepSize)
     {}
 
-    void RbPrmPathValidation::add(const core::ConfigValidationPtr_t& configValidation)
-    {
-      core::DiscretizedPathValidation::add (configValidation);
-      rbprmValidation_ = boost::dynamic_pointer_cast<RbPrmValidation>(configValidation);
-    }
 
 
-    bool RbPrmPathValidation::validate
-    (const core::PathPtr_t& path, bool reverse, core::PathPtr_t& validPart,
-     core::PathValidationReportPtr_t& validationReport,const std::vector<std::string>& filter)
-    {
+    /// validate with custom filter for the rom validation
+    bool DynamicPathValidation::validate (const core::PathPtr_t& path, bool reverse, core::PathPtr_t& validPart, core::PathValidationReportPtr_t& validationReport,const std::vector<std::string>& filter){
+      hppDout(notice,"dynamic path validation called with filters");
       core::ValidationReportPtr_t configReport;
+      Configuration_t q;
+      if(reverse)
+        (*path)(q,path->timeRange ().second);
+      else
+        (*path)(q,path->timeRange ().first);
+
+      rbprmValidation_->validate(q,configReport);
+      dynamicValidation_->setInitialReport(configReport);
+      hppDout(notice,"dynamic validation set initial report OK");
+
       assert (path);
       bool valid = true;
       if (reverse) {
@@ -65,7 +74,7 @@ namespace hpp{
         Configuration_t q (path->outputSize());
         while (finished < 2 && valid) {
           bool success = (*path) (q, t);
-          if (!success || !rbprmValidation_->validate (q, configReport,filter)) {
+          if (!success || !rbprmValidation_->validate (q, configReport,filter) || !dynamicValidation_->validate(q,configReport)) {
             validationReport = core::CollisionPathValidationReportPtr_t
                 (new core::CollisionPathValidationReport (t, configReport));
             valid = false;
@@ -94,7 +103,7 @@ namespace hpp{
         Configuration_t q (path->outputSize());
         while (finished < 2 && valid) {
           bool success = (*path) (q, t);
-          if (!success || !rbprmValidation_->validate (q, configReport,filter)) {
+          if (!success || !rbprmValidation_->validate (q, configReport,filter) || !dynamicValidation_->validate(q,configReport)) {
             validationReport = core::CollisionPathValidationReportPtr_t
                 (new core::CollisionPathValidationReport (t, configReport));
             valid = false;
@@ -117,7 +126,28 @@ namespace hpp{
       }
     }
 
+    bool DynamicPathValidation::validate (const core::PathPtr_t& path, bool reverse,  core::PathPtr_t& validPart,  core::PathValidationReportPtr_t& validationReport){
+      hppDout(info,"dynamic path validation called");
+      hppDout(info,"path begin : "<<path->timeRange ().first);
+      hppDout(info,"path end : "<<path->timeRange ().second);
+
+      core::ValidationReportPtr_t configReport;
+      Configuration_t q (path->outputSize());
+      if(reverse)
+        (*path)(q,path->timeRange ().second);
+      else
+        (*path)(q,path->timeRange ().first);
+
+      hppDout(info,"q = "<<model::displayConfig(q));
+      rbprmValidation_->validate(q,configReport);
+      hppDout(info,"rbprmValidation called" );
+      dynamicValidation_->setInitialReport(configReport);
+      hppDout(info,"dynamic validation set initial report OK");
+      return core::DiscretizedPathValidation::validate(path,reverse,validPart,validationReport);
+    }
 
 
-  }//namespace rbprm
-} //namespace hpp
+
+
+  } // namespace rbprm
+} // namespace hpp

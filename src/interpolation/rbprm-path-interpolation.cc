@@ -16,6 +16,7 @@
 
 #include <hpp/rbprm/interpolation/rbprm-path-interpolation.hh>
 #include <hpp/rbprm/contact_generation/algorithm.hh>
+#include <hpp/model/configuration.hh>
 
 #ifdef PROFILE
     #include "hpp/rbprm/rbprm-profiler.hh"
@@ -42,16 +43,20 @@ namespace hpp {
 
     // ========================================================================
 
-    namespace
-    {
-    core::Configuration_t configPosition(core::ConfigurationIn_t previous, const core::PathVectorConstPtr_t path, double i)
+
+    core::Configuration_t RbPrmInterpolation::configPosition(core::ConfigurationIn_t previous, const core::PathVectorConstPtr_t path, double i)
     {
         core::Configuration_t configuration = previous;
-        const core::Configuration_t configPosition = path->operator ()(std::min(i, path->timeRange().second));
-        configuration.head(configPosition.rows()) = configPosition;
+        size_t pathConfigSize = path->outputSize() - robot_->device_->extraConfigSpace().dimension();
+        core::Configuration_t configPosition(path->outputSize());
+        (*path)(configPosition,std::min(i, path->timeRange().second));
+        configuration.head(pathConfigSize) = configPosition.head(pathConfigSize);
+        configuration.tail(robot_->device_->extraConfigSpace().dimension()) = configPosition.tail(robot_->device_->extraConfigSpace().dimension()) ;
+        configuration[2] = configuration[2] + 0.1; //walk static
+        //configuration[2] = configuration[2] + 0.02; //stairs
         return configuration;
     }
-    }
+
 
     rbprm::T_StateFrame RbPrmInterpolation::Interpolate(const affMap_t& affordances,
             const std::map<std::string, std::vector<std::string> >& affFilters, const double timeStep, const double robustnessTreshold, const bool filterStates)
@@ -60,7 +65,7 @@ namespace hpp {
         T_Configuration configs;
         const core::interval_t& range = path_->timeRange();
         configs.push_back(start_.configuration_);
-int j = 0;
+		int j = 0;
         //for(double i = range.first + timeStep; i< range.second; i+= timeStep)
         for(double i = range.first; i< range.second; i+= timeStep, ++j)
         {
@@ -76,12 +81,15 @@ int j = 0;
                                                         const model::value_type timeStep, const model::value_type initValue, const bool filterStates)
     {
         int nbFailures = 0;
+        size_t accIndex = robot_->device_->configSize() - robot_->device_->extraConfigSpace().dimension () + 3 ; // index of the start of the acceleration vector (of size 3), in the configuration vector
+        hppDout(notice,"acceleration index : "<<accIndex);
         model::value_type currentVal(initValue);
         rbprm::T_StateFrame states;
         states.push_back(std::make_pair(currentVal, this->start_));
         std::size_t nbRecontacts = 0;
         std::size_t repos = 0;
         bool allowFailure = true;
+        Eigen::Vector3d dir,acc;
 #ifdef PROFILE
     RbPrmProfiler& watch = getRbPrmProfiler();
     watch.reset_all();
@@ -91,14 +99,15 @@ int j = 0;
         {
             const State& previous = states.back().second;
             core::Configuration_t configuration = *cit;
-            Eigen::Vector3d dir = configuration.head<3>() - previous.configuration_.head<3>();
+            acc = configuration.segment<3>(accIndex);
+            dir = configuration.head<3>() - previous.configuration_.head<3>();
             fcl::Vec3f direction(dir[0], dir[1], dir[2]);
             bool nonZero(false);
             direction.normalize(&nonZero);
             if(!nonZero) direction = fcl::Vec3f(0,0,1.);
             // TODO Direction 6d
             hpp::rbprm::contact::ContactReport rep = contact::ComputeContacts(previous, robot_,configuration, affordances,affFilters,direction,
-                                             robustnessTreshold);
+                                             robustnessTreshold,acc);
             State& newState = rep.result_;
 
 
@@ -114,7 +123,7 @@ int j = 0;
                     ++cit;
                 }
                 currentVal+= timeStep;
-if (nbFailures > 0)
+if (nbFailures > 1)
 {
     std::cout << "failed " << std::endl;
 #ifdef PROFILE
@@ -151,15 +160,16 @@ if (nbFailures > 0)
                 ++repos;
                 if (repos > 20)
                 {
-#ifdef PROFILE
-    watch.stop("complete generation");
-    watch.add_to_count("planner failed", 1);
-    std::ofstream fout;
-    fout.open("log.txt", std::fstream::out | std::fstream::app);
-    std::ostream* fp = &fout;
-    watch.report_count(*fp);
-    fout.close();
-#endif
+				std::cout<<"failed, too much repositionning"<<std::endl;
+				#ifdef PROFILE
+					watch.stop("complete generation");
+					watch.add_to_count("planner failed", 1);
+					std::ofstream fout;
+					fout.open("log.txt", std::fstream::out | std::fstream::app);
+					std::ostream* fp = &fout;
+					watch.report_count(*fp);
+					fout.close();
+				#endif
                     return FilterStates(states, filterStates);
                 }
             }
@@ -279,7 +289,7 @@ if (nbFailures > 0)
             const State& current    = (cit2)->second;
             const State& current_m1 = (cit)->second;
             if((current.configuration_ - current_m1.configuration_).norm() > std::numeric_limits<double>::epsilon()
-                   && !(current.contactBreaks(current_m1).empty() && current.contactCreations(current_m1).empty()))
+                    && !(current.contactBreaks(current_m1).empty() && current.contactCreations(current_m1).empty()))
             {
                 res.push_back(std::make_pair(cit2->first, cit2->second));
             }

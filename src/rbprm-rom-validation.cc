@@ -17,7 +17,8 @@
 #include "hpp/rbprm/rbprm-rom-validation.hh"
 #include <hpp/fcl/collision.h>
 #include <hpp/fcl/BVH/BVH_model.h>
-
+#include <hpp/rbprm/rbprm-validation-report.hh>
+#include "utils/algorithms.h"
 
 namespace hpp {
   using namespace core;
@@ -34,7 +35,9 @@ namespace hpp {
                                            ,const std::vector<std::string>& affFilters)
         : hpp::core::CollisionValidation(robot)
         , filter_(affFilters)
-        , unusedReport_(new CollisionValidationReport) {}
+        , unusedReport_(new CollisionValidationReport)
+        , optional_(false)
+    { }
 
     bool RbPrmRomValidation::validate (const Configuration_t& config)
     {
@@ -43,8 +46,66 @@ namespace hpp {
 
     bool RbPrmRomValidation::validate (const Configuration_t& config,
                     ValidationReportPtr_t& validationReport)
-    {       
-				return !hpp::core::CollisionValidation::validate(config, validationReport);
-		}
+    {
+      ValidationReportPtr_t romReport;
+
+      bool collision = !hpp::core::CollisionValidation::validate(config, romReport);
+      //CollisionValidationReportPtr_t reportCast = boost::dynamic_pointer_cast<CollisionValidationReport>(romReport);
+      //hppDout(notice,"number of contacts  : "<<reportCast->result.numContacts());
+      //hppDout(notice,"contact 1 "<<reportCast->result.getContact(0).pos);
+      RbprmValidationReportPtr_t rbprmReport =boost::dynamic_pointer_cast<RbprmValidationReport>(validationReport);
+      if(rbprmReport){
+        //hppDout(notice,"rbprm-validation-report correctly cast");
+        rbprmReport->ROMFilters.insert(std::make_pair(robot_->name(),collision));
+      }else{
+        hppDout(notice,"Validation report is not a valid rbprm-validation-report instance");
+      }
+      if(collision){
+        if(rbprmReport ){  // if the report is a correct rbprm report, we add the rom information
+          core::CollisionValidationReportPtr_t romCollisionReport = boost::dynamic_pointer_cast<CollisionValidationReport>(romReport);
+          rbprmReport->ROMReports.insert(std::make_pair(robot_->name(),romCollisionReport));
+
+          // re arrange the collision pair such that the first one is the pair in collision
+          // (allow us to maintain the contact with the same obstacle as long as possible)
+          CollisionObjectPtr_t obj2 = romCollisionReport->object2;
+          CollisionPair_t colPair;
+          bool first(true);
+          for(CollisionPairs_t::iterator it = collisionPairs_.begin() ; it != collisionPairs_.end() ; ++it){
+            if(it->second == obj2){
+              colPair = *it;
+              break;
+            }
+            first=false;
+          }
+
+          if(!first){
+            collisionPairs_.remove(colPair);
+            collisionPairs_.push_front(colPair);
+          }
+
+        }else{
+          validationReport = romReport;
+        }
+      }
+
+
+
+      if(optional_)
+        return true;
+      else
+        return collision;
+    }
+
+
+    void RbPrmRomValidation::randomnizeCollisionPairs(){
+      std::vector<CollisionPair_t> v;
+      v.reserve(collisionPairs_.size());
+      v.insert(v.end(),collisionPairs_.begin(),collisionPairs_.end());
+      std::random_shuffle(v.begin(), v.end());
+      collisionPairs_.clear();
+      collisionPairs_.insert(collisionPairs_.end(),v.begin(),v.end());
+    }
+
+
   }// namespace rbprm
 }// namespace hpp

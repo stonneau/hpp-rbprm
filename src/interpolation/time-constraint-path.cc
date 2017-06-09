@@ -163,17 +163,15 @@ std::cout <<  device_->getJointByName("rh_foot_joint")->currentTransformation().
 
 std::cout << "lh_foot_joint  " << std::endl;
 std::cout <<  device_->getJointByName("lh_foot_joint")->currentTransformation().getTranslation() << std::endl;*/
-          hppDout (error, initial().transpose ());
-          throw std::runtime_error  ("Initial configuration of path does not satisfy "
+          hppDout (error,"Initial configuration of path does not satisfy the constraints" << initial().transpose ());
+          throw projection_error ("Initial configuration of path does not satisfy "
               "the constraints");
         }
         updateConstraints(endc);
-        if (constraints() && !constraints()->isSatisfied (end(), errr)) {
-            device_->currentConfiguration(end());
-            device_->computeForwardKinematics();
-std::cout << "end conf " <<  device_->positionCenterOfMass() << "\n error \n" << errr << std::endl;
-          hppDout (error, end().transpose ());
-          throw std::runtime_error ("End configuration of path does not satisfy "
+        if (constraints() && !constraints()->isSatisfied (end())) {
+//std::cout << "end conf " <<  initc << std::endl;
+          hppDout (error,"End configuration of path does not satisfy the constraints"<< end().transpose ());
+          throw projection_error ("End configuration of path does not satisfy "
               "the constraints");
         }
       }

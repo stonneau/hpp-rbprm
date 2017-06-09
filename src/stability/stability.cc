@@ -19,6 +19,7 @@
 #include <hpp/rbprm/stability/stability.hh>
 #include <hpp/rbprm/stability/support.hh>
 #include <hpp/model/device.hh>
+#include <hpp/model/configuration.hh>
 #include <hpp/model/joint.hh>
 #include <hpp/model/center-of-mass-computation.hh>
 #include <hpp/rbprm/tools.hh>
@@ -98,6 +99,7 @@ namespace stability{
                 p.row(i) = (roWorld * pLocal).getTranslation();
             }
         }
+
     }
 
     void computePointContact(const std::string& name, const RbPrmLimbPtr_t limb, const State& state, Ref_vector3 p)
@@ -139,9 +141,11 @@ namespace stability{
         return res;
     }
 
+
     centroidal_dynamics::Vector3 setupLibrary(const RbPrmFullBodyPtr_t fullbody, State& state, Equilibrium& sEq, EquilibriumAlgorithm& alg,
-                                             const core::value_type friction = 0.6)
+                                             core::value_type friction = 0.6)
     {
+        friction = fullbody->getFriction();
         const rbprm::T_Limb& limbs = fullbody->GetLimbs();
         hpp::model::ConfigurationIn_t save = fullbody->device_->currentConfiguration();
         std::vector<std::string> contacts;
@@ -168,6 +172,7 @@ namespace stability{
             const RbPrmLimbPtr_t limb =limbs.at(contacts[c]);
             const fcl::Vec3f& n = state.contactNormals_.at(contacts[c]);
             Vector3 normal(n[0],n[1],n[2]);
+            normal.normalize();
             const std::size_t& inc = *cit;
             if(inc > 1)
                 computeRectangleContact(contacts[c], limb,state,positions.middleRows<4>(currentIndex));
@@ -254,36 +259,60 @@ const fcl::Vec3f comfcl = comcptr->com();*/
     }
 
 
-    double IsStable(const RbPrmFullBodyPtr_t fullbody, State& state, const centroidal_dynamics::EquilibriumAlgorithm algorithm)
+    double IsStable(const RbPrmFullBodyPtr_t fullbody, State& state,fcl::Vec3f acc, const centroidal_dynamics::EquilibriumAlgorithm algorithm)
     {
 #ifdef PROFILE
     RbPrmProfiler& watch = getRbPrmProfiler();
     watch.start("test balance");
 #endif
         centroidal_dynamics::EquilibriumAlgorithm alg = algorithm;
+        if(acc.norm() == 0){
+          hppDout(notice,"isStable ? called with acc = 0");
+          hppDout(notice,"configuration in state = "<<model::displayConfig(state.configuration_));
+          core::size_type configSize = fullbody->device_->configSize() - fullbody->device_->extraConfigSpace().dimension ();
+          acc = state.configuration_.segment<3>(configSize+3);
+          hppDout(notice,"new acceleration = "<<acc);
+        }
         Equilibrium staticEquilibrium(initLibrary(fullbody));
         centroidal_dynamics::Vector3 com = setupLibrary(fullbody,state,staticEquilibrium,alg);
-        double res;LP_status status;
+        double res;
+        LP_status status;
         if(alg == EQUILIBRIUM_ALGORITHM_PP)
         {
+            hppDout(notice,"isStable Called with STATIC_EQUILIBRIUM_ALGORITHM_PP");
             bool isStable(false);
             status = staticEquilibrium.checkRobustEquilibrium(com,isStable);
             res = isStable? 1. : -1.;
         }
         else // STATIC_EQUILIBRIUM_ALGORITHM_DLP
         {
-           status = staticEquilibrium.computeEquilibriumRobustness(com,res);
+           if(fullbody->staticStability()){
+          		status = staticEquilibrium.computeEquilibriumRobustness(com,res);
+              hppDout(notice,"isStable Called with staticStability");
+           }
+           else{
+          		status = staticEquilibrium.computeEquilibriumRobustness(com,acc,res);
+              hppDout(notice,"isStable : config = "<<model::displayConfig(state.configuration_));
+              hppDout(notice,"isStable : COM = "<<com.transpose());
+              hppDout(notice,"isStable : acc = "<<acc);
+           }
         }
 #ifdef PROFILE
     watch.stop("test balance");
 #endif
         if(status != LP_STATUS_OPTIMAL)
         {
-            if(status == LP_STATUS_INFEASIBLE || status == LP_STATUS_UNBOUNDED)
+            if(status == LP_STATUS_UNBOUNDED)
+              hppDout(notice,"isStable : lp unbounded");
+            if(status == LP_STATUS_INFEASIBLE || status == LP_STATUS_UNBOUNDED){
                 //return 1.1; // completely arbitrary: TODO
+                //hppDout(notice,"isStable LP infeasible");
                 return -1.1; // completely arbitrary: TODO
+            }
+            //hppDout(notice,"isStable error in LP");
             return -std::numeric_limits<double>::max();
         }
+        hppDout(notice,"isStable LP successfully solved : robustness = "<<res);
         return res ;
     }
 

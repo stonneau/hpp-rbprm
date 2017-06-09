@@ -41,8 +41,10 @@ namespace hpp {
     ///
     /// \param fullbody The considered robot for static equilibrium
     /// \param state The current State of the robots, in terms of contact creation
+    /// \param acc acceleration of the COM of the robot
     /// \return Whether the configuration is statically balanced
-    double IsStable(const RbPrmFullBodyPtr_t fullbody, State& state, const centroidal_dynamics::EquilibriumAlgorithm = centroidal_dynamics::EQUILIBRIUM_ALGORITHM_DLP);
+
+    double IsStable(const RbPrmFullBodyPtr_t fullbody, State& state, fcl::Vec3f acc = fcl::Vec3f(0,0,0), const centroidal_dynamics::EquilibriumAlgorithm = centroidal_dynamics::EQUILIBRIUM_ALGORITHM_DLP);
 
 
     /// Using the polytope computation of the gravito inertial wrench cone,

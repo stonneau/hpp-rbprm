@@ -19,7 +19,9 @@
 #include <hpp/rbprm/contact_generation/contact_generation.hh>
 #include <hpp/rbprm/stability/stability.hh>
 #include <hpp/rbprm/tools.hh>
-
+#ifdef PROFILE
+    #include "hpp/rbprm/rbprm-profiler.hh"
+#endif
 
 
 namespace hpp {
@@ -122,7 +124,7 @@ bool maintain_contacts_stability_rec(hpp::rbprm::RbPrmFullBodyPtr_t fullBody,
                         const fcl::Vec3f& acceleration, const double robustness,
                         ProjectionReport& currentRep)
 {
-    if(stability::IsStable(fullBody,currentRep.result_) > robustness)
+    if(stability::IsStable(fullBody,currentRep.result_, acceleration) > robustness)
     {
         currentRep.result_.stable = true;
         return true;
@@ -385,7 +387,7 @@ hpp::rbprm::State findValidCandidate(const ContactGenHelper &contactGenHelper, c
         /*ProjectionReport */rep = projectSampleToObstacle(contactGenHelper.fullBody_, limbId, limb, bestReport, validation, configuration, current);
         if(rep.success_)
         {
-            double robustness = stability::IsStable(contactGenHelper.fullBody_,rep.result_);
+            double robustness = stability::IsStable(contactGenHelper.fullBody_,rep.result_, contactGenHelper.acceleration_);
             if(    !contactGenHelper.checkStabilityGenerate_
                 || (rep.result_.nbContacts == 1 && !contactGenHelper.stableForOneContact_)
                 || robustness>=contactGenHelper.robustnessTreshold_)
@@ -486,11 +488,8 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
         ContactState cState = candidates.front();
         candidates.pop();
         bool checkStability(contactGenHelper.checkStabilityGenerate_);
-        //contactGenHelper.checkStabilityGenerate_ = false; // stability not mandatory before last contact is created
-
-        if (false)
-        //std::vector<std::string> fixed = contactGenHelper.workingState_.fixedContacts(contactGenHelper.workingState_);
-        //if(fixed.size() > 2 && cState.second.empty() && (contactGenHelper.workingState_.stable || (stability::IsStable(contactGenHelper.fullBody_,contactGenHelper.workingState_) > contactGenHelper.robustnessTreshold_ )) )
+        contactGenHelper.checkStabilityGenerate_ = false; // stability not mandatory before last contact is created
+        if(cState.second.empty() && contactGenHelper.workingState_.stable)
         {
             bool reqLimValid(true);
             // check if all required contacts are active
@@ -594,6 +593,7 @@ projection::ProjectionReport repositionContacts(ContactGenHelper& helper)
     resultReport.result_ = result;
     return resultReport;
 }
+
 } // namespace projection
 } // namespace rbprm
 } // namespace hpp

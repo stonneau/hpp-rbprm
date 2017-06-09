@@ -230,34 +230,49 @@ bool rbprm::sampling::GetCandidates(const SampleDB& sc, const fcl::Transform3f& 
     std::vector<long int> visited;
     int totalSamples = 0;
     int okay = 0;
+    //hppDout(notice,"o2 name = "<<o2->name());
+    //hppDout(notice,"o2 number tri = "<<(boost::static_pointer_cast<const fcl::BVHModel<fcl::OBBRSS> >(obj->collisionGeometry()))->num_tris);
+    //hppDout(notice,"number of contact = "<<cResult.numContacts());
     for(std::size_t index=0; index<cResult.numContacts(); ++index)
     {
         const Contact& contact = cResult.getContact(index);
+        //hppDout(notice,"contact b1 = "<<contact.b1);
         if(std::find(visited.begin(), visited.end(), contact.b1) == visited.end())
             visited.push_back(contact.b1);
         //verifying that position is theoritically reachable from next position
         {
             voxelIt = sc.samplesInVoxels_.find(contact.b1);
-            const VoxelSampleId& voxelSampleIds = voxelIt->second;
-            totalSamples += (int)voxelSampleIds.second;
-            for(T_Sample::const_iterator sit = sc.samples_.begin()+ voxelSampleIds.first;
-                sit != sc.samples_.begin()+ voxelSampleIds.first + voxelSampleIds.second; ++sit)
-            {
-                //find normal id
-                assert(contact.o2->getObjectType() == fcl::OT_BVH); // only works with meshes
-                const fcl::BVHModel<fcl::OBBRSS>* surface = static_cast<const fcl::BVHModel<fcl::OBBRSS>*> (contact.o2);
-                fcl::Vec3f normal;
-                const fcl::Triangle& tr = surface->tri_indices[contact.b2];
-                const fcl::Vec3f& v1 = surface->vertices[tr[0]];
-                const fcl::Vec3f& v2 = surface->vertices[tr[1]];
-                const fcl::Vec3f& v3 = surface->vertices[tr[2]];
-                normal = (v2 - v1).cross(v3 - v1);
-                normal.normalize();
-                Eigen::Vector3d eNormal(normal[0], normal[1], normal[2]);
-                OctreeReport report(&(*sit), contact, evaluate ? ((*evaluate)(*sit, eDir, eNormal)) :0, normal);
-                ++okay;
-                reports.insert(report);
-            }
+            if(voxelIt != sc.samplesInVoxels_.end()){
+              const VoxelSampleId& voxelSampleIds = voxelIt->second;
+              //hppDout(notice,"voxel first = "<<voxelSampleIds.first);
+              //hppDout(notice,"voxel second = "<<voxelSampleIds.second);
+              totalSamples += (int)voxelSampleIds.second;
+              for(T_Sample::const_iterator sit = sc.samples_.begin()+ voxelSampleIds.first;
+                  sit != sc.samples_.begin()+ voxelSampleIds.first + voxelSampleIds.second; ++sit)
+              {
+                  //find normal id
+                  assert(contact.o2->getObjectType() == fcl::OT_BVH); // only works with meshes
+                  const fcl::BVHModel<fcl::OBBRSS>* surface = static_cast<const fcl::BVHModel<fcl::OBBRSS>*> (contact.o2);
+                  fcl::Vec3f normal;
+                  const fcl::Triangle& tr = surface->tri_indices[contact.b2];
+                  const fcl::Vec3f& v1 = surface->vertices[tr[0]];
+                  const fcl::Vec3f& v2 = surface->vertices[tr[1]];
+                  const fcl::Vec3f& v3 = surface->vertices[tr[2]];
+                  normal = (v2 - v1).cross(v3 - v1);
+                  normal.normalize();
+                  Eigen::Vector3d eNormal(normal[0], normal[1], normal[2]);
+                  /*hppDout(notice,"sample normal : "<<eNormal.transpose());
+                  hppDout(notice,"sample contact tri = "<<contact.b2);
+                  hppDout(notice,"sample contact position = "<<contact.pos);
+                  hppDout(notice,"sample id "<<sit->id_);
+                  hppDout(notice,"sample id OK");
+                  */
+                  OctreeReport report(&(*sit), contact, evaluate ? ((*evaluate)(*sit, eDir, eNormal)) :0, eNormal);
+                  ++okay;
+                  reports.insert(report);
+              }
+            }else
+              hppDout(warning,"no voxels in specified triangle : "<<contact.b1);
         }
     }
     return !reports.empty();
@@ -375,6 +390,7 @@ SampleDB::SampleDB(std::ifstream& myfile, bool loadValues)
                 samples_.push_back(readSample(myfile, line));
             else if(line.find("value") != std::string::npos && loadValues)
                 readValue(values_,size,myfile,line);
+
         }
     }
     octomapTree_ = boost::shared_ptr<const octomap::OcTree>(generateOctree(samples_, resolution_));
