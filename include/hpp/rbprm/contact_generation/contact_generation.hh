@@ -135,6 +135,7 @@ bool operator==(const Vec2D & v1, const Vec2D & v2);
 bool operator!=(const Vec2D & v1, const Vec2D & v2);
 std::ostream & operator<<(std::ostream & out, const Vec2D & v);
 
+/// Function to verify the existence of an element in a std::vector
 template <typename T>
 bool contains(const std::vector <T> & vect, const T & val)
 {

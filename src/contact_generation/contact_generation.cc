@@ -646,7 +646,7 @@ Plane & Plane::operator=(const Plane & pe)
     }
     return *this;
 }
-fcl::Vec3f orthogonal_projection(const fcl::Vec3f & point, const Plane & plane)
+fcl::Vec3f orthogonalProjection(const fcl::Vec3f & point, const Plane & plane)
 {
     double k(((plane.a * point[0]) + (plane.b * point[1]) + (plane.c * point[2]) + plane.d) / (std::pow(plane.a, 2) + std::pow(plane.b, 2) + std::pow(plane.c, 2)));
     return fcl::Vec3f(point[0] - k*plane.a, point[1] - k*plane.b, point[2] - k*plane.c);
@@ -657,7 +657,7 @@ std::vector <Vec2D> compute_support_polygon(const std::map <std::string, fcl::Ve
     std::vector <Vec2D> res;
     for(std::map<std::string, fcl::Vec3f>::const_iterator cit = contactPositions.begin(); cit != contactPositions.end(); ++cit)
     {
-        //fcl::Vec3f proj(orthogonal_projection(cit->second, h_plane));
+        //fcl::Vec3f proj(orthogonalProjection(cit->second, h_plane));
         //Vec2D vertex_2D(proj[0], proj[1]);
         //res.push_back(vertex_2D);
         res.push_back(Vec2D(cit->second[0], cit->second[1])); // because the plane is horizontal, we just have to remove the z (vertical) component
@@ -809,6 +809,117 @@ std::vector <Vec2D> convexHull(std::vector <Vec2D> set)
     }
 
     return res;
+}
+double orientedAngle2D(const Vec2D & center, const Vec2D & base, const Vec2D & goal)
+{
+    // get the two vectors
+    Vec2D vbase(base.x - center.x, base.y - center.y);
+    Vec2D vgoal(goal.x - center.x, goal.y - center.y);
+
+    // normalize the vectors
+    double normBase(std::sqrt(std::pow(vbase.x, 2) + std::pow(vbase.y, 2)));
+    double normGoal(std::sqrt(std::pow(vgoal.x, 2) + std::pow(vgoal.y, 2)));
+    for(int i = 0; i < 2; ++i)
+    {
+        vbase[i] /= normBase;
+        vgoal[i] /= normGoal;
+    }
+
+    // update the new norms
+    normBase = std::sqrt(std::pow(vbase.x, 2) + std::pow(vbase.y, 2));
+    normGoal = std::sqrt(std::pow(vgoal.x, 2) + std::pow(vgoal.y, 2));
+
+    // calculate the angle between the two vectors
+    double dotProduct = (vbase.x * vgoal.x) + (vbase.y * vgoal.y);
+    double angle = std::acos(dotProduct/(normBase * normGoal));
+
+    // calculate the orientation of the angle
+    if( ((vbase.x >= 0) && (vgoal.x > 0)) || ((vbase.x > 0) && (vgoal.x >= 0)) ) // both vectors in the right side
+    {
+        if(vbase.y > vgoal.y)
+            angle = -angle;
+    }
+    else if( ((vbase.x <= 0) && (vgoal.x < 0)) || ((vbase.x < 0) && (vgoal.x <= 0)) ) // both vectors in the left side
+    {
+        if(vbase.y < vgoal.y)
+            angle = -angle;
+    }
+    else if( ((vbase.y >= 0) && (vgoal.y > 0)) || ((vbase.y > 0) && (vgoal.y >= 0)) ) // both vectors in the top side
+    {
+        if(vbase.x < vgoal.x)
+            angle = -angle;
+    }
+    else if( ((vbase.y <= 0) && (vgoal.y < 0)) || ((vbase.y < 0) && (vgoal.y <= 0)) ) // both vectors in the bottom side
+    {
+        if(vbase.x > vgoal.x)
+            angle = -angle;
+    }
+    else if( ((vbase.x == 0) && (vgoal.x == 0)) || ((vbase.y == 0) && (vgoal.y == 0)) ) // both vectors along the same axis
+    {
+        // Unknown direction, we cannot determine whether the angle goes from base to goal by the first or the second side of the straight line
+    }
+    else // vectors in opposite quadrants
+    {
+        if( ((vbase.x > 0) && (vbase.y > 0)) || ((vgoal.x < 0) && (vgoal.y < 0)) ) // first and third quadrants (posX-posY, negX-negY)
+        {
+            vbase.x = std::abs(vbase.x); vbase.y = std::abs(vbase.y);
+			vgoal.x = std::abs(vgoal.x); vgoal.y = std::abs(vgoal.y);
+            if(vbase.y < vgoal.y)
+				angle = -angle;
+        }
+        else // second and fourth quadrants (negX-posY, posX-negY)
+        {
+            vbase.x = std::abs(vbase.x); vbase.y = std::abs(vbase.y);
+			vgoal.x = std::abs(vgoal.x); vgoal.y = std::abs(vgoal.y);
+            if(vbase.y > vgoal.y)
+				angle = -angle;
+        }
+    }
+    // return the result
+    return angle;
+}
+bool isInside(const Vec2D & point, const std::vector <Vec2D> & polygon)
+{
+    // get the winding number (sumAngles == windingNumber*2*pi)
+    double sumAngles = 0.0; // sumAngles is the sum of all subtended angles by each polygon edge from the considered point
+    Vec2D base, goal;
+    for(unsigned int i = 0; i < polygon.size() - 1; ++i)
+    {
+        base = polygon[i];
+        goal = polygon[i+1];
+        sumAngles += orientedAngle2D(point, base, goal);
+    }
+    sumAngles += orientedAngle2D(point, polygon[polygon.size()], polygon[0]);
+
+    double pi(3.14159265);
+    if(std::abs(sumAngles) < 1e-5) // if sumAngles == 0 --> point is outside polygon
+    {
+        return false;
+    }
+    else if(std::abs(sumAngles - 2*pi) < 1e-5) // if sumAngles == 2*pi --> point is inside polygon
+    {
+        return true;
+    }
+    else // Impossible case
+    {
+        throw std::string("The polygon contains loops, please ensure that the polygon vertices are in order");
+    }
+}
+Vec2D weightedCentroidConvex2D(const std::vector <Vec2D> & convexPolygon)
+{
+
+}
+Vec2D computeZMP(const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g)
+{
+
+}
+bool isValidZMP(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g)
+{
+
+}
+double evaluateZMP(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g)
+{
+
 }
 
 } // namespace projection
