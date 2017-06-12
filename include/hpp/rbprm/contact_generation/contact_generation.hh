@@ -116,6 +116,64 @@ projection::ProjectionReport gen_contacts(ContactGenHelper& contactGenHelper);
 /// \param ContactGenHelper parametrization of the planner
 /// \return the best candidate wrt the priority in the list and the contact order
 projection::ProjectionReport repositionContacts(ContactGenHelper& contactGenHelper);
+
+/* ZMP criterion */
+
+/// Data structure to store 2-dimensional informations (2D vectors)
+struct Vec2D
+{
+    double x;
+    double y;
+	Vec2D() : x(0), y(0) {}
+	Vec2D(double xx, double yy) : x(xx), y(yy) {}
+	Vec2D(const Vec2D & c2D) : x(c2D.x), y(c2D.y) {}
+    Vec2D & operator=(const Vec2D & c);
+    double operator[](int idx) const;
+    double & operator[](int idx);
+};
+
+/// Data structure to define a plane corresponding to the following equation : ax + by + cz + d = 0
+struct Plane
+{
+    double a;
+    double b;
+    double c;
+    double d;
+    Plane() : a(0), b(0), c(1), d(0) {}
+    Plane(double aa, double bb, double cc, double dd) : a(aa), b(bb), c(cc), d(dd) {}
+    Plane(const Plane & pe) : a(pe.a), b(pe.b), c(pe.c), d(pe.d) {}
+    Plane & operator=(const Plane & pe);
+};
+
+/// Compute the position of the Zero-Moment-Point (ZMP)
+///
+/// \param comPos The position of the center of mass of the robot
+/// \param comAccel The center of mass acceleration
+/// \param g The gravity acceleration, default value: -9.80665 m.s-1
+/// \return The position of the ZMP
+Vec2D computeZMP(const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g = -9.80665);
+
+/// Perform the validation of a contact state according to the ZMP criterion
+/// The ZMP must be inside the convex hull of the support polygon (relevant only for coplanar contacts on the ground horizontal plane)
+/// The support polygon is formed by the orthogonal projection of each contact in the ground horizontal plane.
+///
+/// \param state The considered state of the robot
+/// \param comPos The position of the center of mass of the robot
+/// \param comAccel The center of mass acceleration
+/// \param g The gravity acceleration, default value: -9.80665 m.s-1
+/// \return true if the contact state is valid, false otherwise
+bool isValidZMP(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g = -9.80665);
+
+/// Evaluate the cost of a contact state according to the ZMP criterion
+///
+/// \param state The considered state of the robot
+/// \param comPos The position of the center of mass of the robot
+/// \param comAccel The center of mass acceleration
+/// \param g The gravity acceleration, default value: -9.80665 m.s-1
+/// \return The cost of the considered contact state (the lower the cost is, the better the contact state is --> cost to minimize)
+double evaluateZMP(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g = -9.80665);
+
+
     } // namespace projection
   } // namespace rbprm
 } // namespace hpp

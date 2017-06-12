@@ -594,6 +594,63 @@ projection::ProjectionReport repositionContacts(ContactGenHelper& helper)
     return resultReport;
 }
 
+/* ZMP criterion */
+
+Vec2D & Vec2D::operator=(const Vec2D & c)
+{
+    if(this != &c)
+    {
+        this->x = c.x;
+        this->y = c.y;
+    }
+    return *this;
+}
+double Vec2D::operator[](int idx) const
+{
+    idx = idx % 2;
+    if(idx == 0)
+        return this->x;
+    else
+        return this->y;
+}
+double & Vec2D::operator[](int idx)
+{
+    idx = idx % 2;
+    if(idx == 0)
+        return this->x;
+    else
+        return this->y;
+}
+Plane & Plane::operator=(const Plane & pe)
+{
+    if(this != &pe)
+    {
+        this->a = pe.a;
+        this->b = pe.b;
+        this->c = pe.c;
+        this->d = pe.d;
+    }
+    return *this;
+}
+fcl::Vec3f orthogonal_projection(const fcl::Vec3f & point, const Plane & plane)
+{
+    double k(((plane.a * point[0]) + (plane.b * point[1]) + (plane.c * point[2]) + plane.d) / (std::pow(plane.a, 2) + std::pow(plane.b, 2) + std::pow(plane.c, 2)));
+    return fcl::Vec3f(point[0] - k*plane.a, point[1] - k*plane.b, point[2] - k*plane.c);
+}
+std::vector <Vec2D> compute_support_polygon(const std::map <std::string, fcl::Vec3f> & contactPositions)
+{
+    Plane h_plane(0, 0, 1, 0); // horizontal plane
+    std::vector <Vec2D> res;
+    for(std::map<std::string, fcl::Vec3f>::const_iterator cit = contactPositions.begin(); cit != contactPositions.end(); ++cit)
+    {
+        //fcl::Vec3f proj(orthogonal_projection(cit->second, h_plane));
+        //Vec2D vertex_2D(proj[0], proj[1]);
+        //res.push_back(vertex_2D);
+        res.push_back(Vec2D(cit->second[0], cit->second[1])); // because the plane is horizontal, we just have to remove the z (vertical) component
+    }
+    return res;
+}
+
 } // namespace projection
 } // namespace rbprm
 } // namespace hpp
