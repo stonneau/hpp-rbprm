@@ -830,8 +830,8 @@ double orientedAngle2D(const Vec2D & center, const Vec2D & base, const Vec2D & g
     normGoal = std::sqrt(std::pow(vgoal.x, 2) + std::pow(vgoal.y, 2));
 
     // calculate the angle between the two vectors
-    double dotProduct = (vbase.x * vgoal.x) + (vbase.y * vgoal.y);
-    double angle = std::acos(dotProduct/(normBase * normGoal));
+    double dotProduct((vbase.x * vgoal.x) + (vbase.y * vgoal.y));
+    double angle(std::acos(dotProduct/(normBase * normGoal)));
 
     // calculate the orientation of the angle
     if( ((vbase.x >= 0) && (vgoal.x > 0)) || ((vbase.x > 0) && (vgoal.x >= 0)) ) // both vectors in the right side
@@ -881,7 +881,7 @@ double orientedAngle2D(const Vec2D & center, const Vec2D & base, const Vec2D & g
 bool isInside(const Vec2D & point, const std::vector <Vec2D> & polygon)
 {
     // get the winding number (sumAngles == windingNumber*2*pi)
-    double sumAngles = 0.0; // sumAngles is the sum of all subtended angles by each polygon edge from the considered point
+    double sumAngles(orientedAngle2D(point, polygon.back(), polygon.front())); // sumAngles is the sum of all subtended angles by each polygon edge from the considered point
     Vec2D base, goal;
     for(unsigned int i = 0; i < polygon.size() - 1; ++i)
     {
@@ -889,7 +889,6 @@ bool isInside(const Vec2D & point, const std::vector <Vec2D> & polygon)
         goal = polygon[i+1];
         sumAngles += orientedAngle2D(point, base, goal);
     }
-    sumAngles += orientedAngle2D(point, polygon[polygon.size()], polygon[0]);
 
     double pi(3.14159265);
     if(std::abs(sumAngles) < 1e-5) // if sumAngles == 0 --> point is outside polygon
@@ -905,9 +904,90 @@ bool isInside(const Vec2D & point, const std::vector <Vec2D> & polygon)
         throw std::string("The polygon contains loops, please ensure that the polygon vertices are in order");
     }
 }
+double euclideanDist(const Vec2D & v1, const Vec2D & v2)
+{
+    return std::sqrt(std::pow(v1.x - v2.x, 2) + std::pow(v1.y - v2.y, 2));
+}
 Vec2D weightedCentroidConvex2D(const std::vector <Vec2D> & convexPolygon)
 {
+    if(convexPolygon.empty())
+        throw std::string("Impossible to find the weighted centroid of nothing (the specified convex polygon has no vertices)");
 
+    Vec2D res;
+    if(convexPolygon.size() == 1)
+        res = convexPolygon[0];
+    else if(convexPolygon.size() == 2)
+    {
+        double resX((convexPolygon[0].x + convexPolygon[1].x) / 2.0);
+        double resY((convexPolygon[0].y + convexPolygon[1].y) / 2.0);
+        res = Vec2D(resX, resY);
+    }
+    else
+    {
+        // get the longest edge and define the minimum admissible threshold for counting a vertex as a single point
+        double maxDist(euclideanDist(convexPolygon.back(), convexPolygon.front()));
+        for(unsigned int i = 0; i < convexPolygon.size() - 1; ++i)
+        {
+            double dist(euclideanDist(convexPolygon[i], convexPolygon[i+1]));
+            if(dist > maxDist)
+                maxDist = dist;
+        }
+        double threshold(maxDist/10.0);
+
+        // shift the list until starting from a lonely (to the rear) point
+        std::vector <Vec2D> shifted(convexPolygon);
+        while(euclideanDist(shifted.back(), shifted.front()) <= threshold)
+        {
+            shifted.push_back(shifted.front());
+            shifted.erase(shifted.begin());
+        }
+
+        // look over the shifted set
+        std::vector <Vec2D> finalSet, localSubset;
+        bool subsetOngoing = false;
+        shifted.push_back(shifted.front());
+
+        for(unsigned int i = 0; i < shifted.size() - 1; ++i)
+        {
+            if(euclideanDist(shifted[i], shifted[i+1]) > threshold)
+            {
+                if(!subsetOngoing)
+                    finalSet.push_back(shifted[i]);
+                else
+                {
+                    localSubset.push_back(shifted[i]);
+                    double moyX(0.0), moyY(0.0);
+                    for(unsigned int j = 0; j < localSubset.size(); ++j)
+                    {
+                        moyX += localSubset[j].x;
+                        moyY += localSubset[j].y;
+                    }
+                    moyX /= localSubset.size();
+                    moyY /= localSubset.size();
+                    finalSet.push_back(Vec2D(moyX, moyY));
+                    localSubset.clear();
+                    subsetOngoing = false;
+                }
+            }
+            else
+            {
+                localSubset.push_back(shifted[i]);
+                if(!subsetOngoing)
+                    subsetOngoing = true;
+            }
+        }
+
+        double resX(0.0), resY(0.0);
+        for(unsigned int i = 0; i < finalSet.size(); ++i)
+        {
+            resX += finalSet[i].x;
+            resY += finalSet[i].y;
+        }
+        resX /= finalSet.size();
+        resY /= finalSet.size();
+        res = Vec2D(resX, resY);
+    }
+    return res;
 }
 Vec2D computeZMP(const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g)
 {
