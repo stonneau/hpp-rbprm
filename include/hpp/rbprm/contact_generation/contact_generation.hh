@@ -131,6 +131,21 @@ struct Vec2D
     double operator[](int idx) const;
     double & operator[](int idx);
 };
+bool operator==(const Vec2D & v1, const Vec2D & v2);
+bool operator!=(const Vec2D & v1, const Vec2D & v2);
+std::ostream & operator<<(std::ostream & out, const Vec2D & v);
+
+template <typename T>
+bool contains(const std::vector <T> & vect, const T & val)
+{
+    bool found(false);
+    for(unsigned int i = 0; !found && (i < vect.size()); ++i)
+    {
+        if(vect[i] == val)
+            found = true;
+    }
+    return found;
+}
 
 /// Data structure to define a plane corresponding to the following equation : ax + by + cz + d = 0
 struct Plane

@@ -621,6 +621,20 @@ double & Vec2D::operator[](int idx)
     else
         return this->y;
 }
+bool operator==(const Vec2D & v1, const Vec2D & v2)
+{
+    //return ((v1.x == v2.x) && (v1.y == v2.y));
+    return ((std::abs(v1.x - v2.x) < 1e-9) && (std::abs(v1.y - v2.y) < 1e-9));
+}
+bool operator!=(const Vec2D & v1, const Vec2D & v2)
+{
+    return !(v1 == v2);
+}
+std::ostream & operator<<(std::ostream & out, const Vec2D & v)
+{
+    out << "(" << v.x << ", " << v.y << ")";
+    return out;
+}
 Plane & Plane::operator=(const Plane & pe)
 {
     if(this != &pe)
@@ -648,6 +662,152 @@ std::vector <Vec2D> compute_support_polygon(const std::map <std::string, fcl::Ve
         //res.push_back(vertex_2D);
         res.push_back(Vec2D(cit->second[0], cit->second[1])); // because the plane is horizontal, we just have to remove the z (vertical) component
     }
+    return res;
+}
+double computeAngle(const Vec2D & center, const Vec2D & end1, const Vec2D & end2)
+{
+    // build vector1
+    Vec2D vector1(end1.x - center.x, end1.y - center.y);
+    double norm1(std::sqrt(std::pow(vector1.x, 2) + std::pow(vector1.y, 2)));
+
+    // build vector2
+    Vec2D vector2(end2.x - center.x, end2.y - center.y);
+    double norm2(std::sqrt(std::pow(vector2.x, 2) + std::pow(vector2.y, 2)));
+
+    // find the angle between the two vectors using their scalar product
+    double sp((vector1.x*vector2.x) + (vector1.y*vector2.y));
+    return std::acos(sp/(norm1*norm2));
+}
+void scanningProcess(const Vec2D & basePoint, std::vector <Vec2D> & subset, double & angle, const Vec2D & currentPoint, bool higher, bool direction)
+{
+    // higher == true --> currentPoint is above basePoint
+    // higher == false --> currentPoint is below basePoint
+    // direction == true --> scan to the right
+    // direction == false --> scan to the left
+    int higher_val = higher ? 1 : -1;
+    int direction_val = direction ? 1 : -1;
+
+    if(subset.size() == 1)
+    {
+        // init
+        angle = computeAngle(basePoint, Vec2D(basePoint.x + direction_val, basePoint.y), currentPoint);
+        subset.push_back(currentPoint);
+    }
+    else if((higher_val*currentPoint.y) >= (higher_val*subset.back().y))
+    {
+        double opening(computeAngle(subset.back(), Vec2D(subset.back().x + direction_val, subset.back().y), currentPoint));
+        if(opening <= angle)
+        {
+            subset.push_back(currentPoint);
+            angle = opening;
+        }
+        else
+        {
+            subset.pop_back();
+            opening = computeAngle(subset.back(), Vec2D(subset.back().x + direction_val, subset.back().y), currentPoint);
+            bool convex(false);
+            if(subset.size() == 1)
+                convex = true;
+            while(!convex)
+            {
+                Vec2D base(subset[subset.size() - 2]);
+                angle = computeAngle(base, Vec2D(base.x + direction_val, base.y), subset.back());
+                if(angle < opening)
+                {
+                    subset.pop_back();
+                    opening = computeAngle(subset.back(), Vec2D(subset.back().x + direction_val, subset.back().y), currentPoint);
+                }
+                else
+                    convex = true;
+                if(subset.size() == 1)
+                    convex = true;
+            }
+            subset.push_back(currentPoint);
+            angle = opening;
+        }
+    }
+}
+std::vector <Vec2D> convexHull(std::vector <Vec2D> set)
+{
+    std::vector <Vec2D> res_tmp, res;
+    
+    if(!set.empty())
+    {
+        /* sort the input set by x increasing */
+        std::vector <Vec2D> sortedSet;
+        while(!set.empty())
+        {
+            double index(0);
+            double min(set[index].x);
+            for(unsigned int i = 0; i < set.size(); ++i)
+            {
+                if(set[i].x < min)
+                {
+                    min = set[i].x;
+                    index = i;
+                }
+            }
+            sortedSet.push_back(set[index]);
+            set.erase(set.begin()+index);
+        }
+
+        /* first scanning, to the right */
+        Vec2D basePoint(sortedSet[0]);
+        std::vector <Vec2D> tr_upper_set; tr_upper_set.push_back(basePoint);
+        std::vector <Vec2D> tr_lower_set; tr_lower_set.push_back(basePoint);
+        double upperAngle, lowerAngle;
+        for(unsigned int i = 1; i < sortedSet.size(); ++i)
+        {
+            if(sortedSet[i].y >= basePoint.y) // if the point is upper than basePoint
+            {
+                scanningProcess(basePoint, tr_upper_set, upperAngle, sortedSet[i], true, true);
+            }
+            else // if the point is lower than basePoint
+            {
+                scanningProcess(basePoint, tr_lower_set, lowerAngle, sortedSet[i], false, true);
+            }
+        }
+
+        /* second scanning, to the left */
+        basePoint = sortedSet.back();
+        std::vector <Vec2D> tl_upper_set; tl_upper_set.push_back(basePoint);
+        std::vector <Vec2D> tl_lower_set; tl_lower_set.push_back(basePoint);
+        for(int i = (int)sortedSet.size() - 2; i >= 0; --i)
+        {
+            if(sortedSet[i].y >= basePoint.y) // if the point is upper than basePoint
+            {
+                scanningProcess(basePoint, tl_upper_set, upperAngle, sortedSet[i], true, false);
+            }
+            else // if the point is lower than basePoint
+            {
+                scanningProcess(basePoint, tl_lower_set, lowerAngle, sortedSet[i], false, false);
+            }
+        }
+
+        /* merge the four subsets without keeping the duplicates (subsets boundaries, ...) */
+        for(unsigned int i = 0; i < tr_upper_set.size(); ++i)
+        {
+            res_tmp.push_back(tr_upper_set[i]);
+        }
+        for(int i = (int)tl_upper_set.size() - 1; i >= 0; --i)
+        {
+            res_tmp.push_back(tl_upper_set[i]);
+        }
+        for(unsigned int i = 0; i < tl_lower_set.size(); ++i)
+        {
+            res_tmp.push_back(tl_lower_set[i]);
+        }
+        for(int i = (int)tr_lower_set.size() - 1; i >= 0; --i)
+        {
+            res_tmp.push_back(tr_lower_set[i]);
+        }
+        for(unsigned int i = 0; i < res_tmp.size(); ++i)
+        {
+            if(!contains(res, res_tmp[i]))
+                res.push_back(res_tmp[i]);
+        }
+    }
+
     return res;
 }
 
