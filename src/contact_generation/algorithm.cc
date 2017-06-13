@@ -193,7 +193,7 @@ hpp::rbprm::contact::ContactReport ComputeContacts(const hpp::rbprm::State& prev
     // try to maintain previous contacts
     std::size_t maxContactBreaks(static_cast<std::size_t>(body->getMaxContactBreaks()));
     contact::ContactGenHelper cHelper(body,previous,configuration,affordances,affFilters,robustnessTreshold,maxContactBreaks,1,false,
-                                      true,direction,acceleration,false,false);
+                                      true,direction,acceleration,false,false, body->getZmpCostThreshold());
     contact::ContactReport rep = contact::oneStep(cHelper);
 
     // copy extra dofs

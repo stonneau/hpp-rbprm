@@ -129,6 +129,7 @@ namespace hpp {
         model::ConfigurationPtr_t referenceConfig_;
         unsigned short maxContactBreaks_;
         std::vector <std::string> requiredLimbs_;
+        double zmpCostThreshold_;
 
     public:
         unsigned short getMaxContactBreaks() const {return this->maxContactBreaks_;}
@@ -138,6 +139,8 @@ namespace hpp {
         void addRequiredLimb(const std::string & limb);
         void removeRequiredLimb(const std::string & limb);
         void clearRequiredLimbs();
+        void setZmpCostThreshold(double zct) {this->zmpCostThreshold_ = zct;}
+        double getZmpCostThreshold() const {return this->zmpCostThreshold_;}
 
     private:
         void AddLimbPrivate(rbprm::RbPrmLimbPtr_t limb, const std::string& id, const std::string& name,

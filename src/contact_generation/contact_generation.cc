@@ -37,7 +37,8 @@ ContactGenHelper::ContactGenHelper(RbPrmFullBodyPtr_t fb, const State& ps, model
                                     const fcl::Vec3f& direction,
                                     const fcl::Vec3f& acceleration,
                                     const bool contactIfFails,
-                                    const bool stableForOneContact)
+                                    const bool stableForOneContact,
+                                    const double zmpCostThreshold)
 : fullBody_(fb)
 , previousState_(ps)
 , checkStabilityMaintain_(checkStabilityMaintain)
@@ -52,6 +53,7 @@ ContactGenHelper::ContactGenHelper(RbPrmFullBodyPtr_t fb, const State& ps, model
 , affFilters_(affFilters)
 , workingState_(previousState_)
 , checkStabilityGenerate_(checkStabilityGenerate)
+, zmpCostThreshold_(zmpCostThreshold)
 {
     workingState_.configuration_ = configuration;
     workingState_.stable = false;
@@ -377,6 +379,8 @@ hpp::rbprm::State findValidCandidate(const ContactGenHelper &contactGenHelper, c
     core::Configuration_t moreRobust, configuration;
     configuration = current.configuration_;
     double maxRob = -std::numeric_limits<double>::max();
+    double minCost = std::numeric_limits<double>::max();
+    fcl::Vec3f comPos;
     sampling::T_OctreeReport::const_iterator it = finalSet.begin();
     fcl::Vec3f position, normal;
     fcl::Matrix3f rotation;
@@ -387,12 +391,24 @@ hpp::rbprm::State findValidCandidate(const ContactGenHelper &contactGenHelper, c
         /*ProjectionReport */rep = projectSampleToObstacle(contactGenHelper.fullBody_, limbId, limb, bestReport, validation, configuration, current);
         if(rep.success_)
         {
+            contactGenHelper.fullBody_->device_->computeForwardKinematics();
+            comPos = contactGenHelper.fullBody_->device_->positionCenterOfMass();
+            double cost(std::numeric_limits<double>::max());
+            try
+            {
+                cost = evaluateZMP(current, comPos, contactGenHelper.acceleration_);
+            }
+            catch(std::string s)
+            {
+                std::cout << "Exception : " << s << std::endl;
+            }
             double robustness = stability::IsStable(contactGenHelper.fullBody_,rep.result_, contactGenHelper.acceleration_);
             if(    !contactGenHelper.checkStabilityGenerate_
                 || (rep.result_.nbContacts == 1 && !contactGenHelper.stableForOneContact_)
-                || robustness>=contactGenHelper.robustnessTreshold_)
+                || (robustness>=contactGenHelper.robustnessTreshold_ && cost <= contactGenHelper.zmpCostThreshold_))
             {
                 maxRob = std::max(robustness, maxRob);
+                minCost = std::min(cost, minCost);
                 position = limb->effector_->currentTransformation().getTranslation();
                 rotation = limb->effector_->currentTransformation().getRotation();
                 normal = rep.result_.contactNormals_.at(limbId);
@@ -400,10 +416,11 @@ hpp::rbprm::State findValidCandidate(const ContactGenHelper &contactGenHelper, c
             }
             // if no stable candidate is found, select best contact
             // anyway
-            else if((robustness > maxRob) && contactGenHelper.contactIfFails_)
+            else if((robustness > maxRob) && (cost < minCost) && contactGenHelper.contactIfFails_)
             {
                 moreRobust = configuration;
                 maxRob = robustness;
+                minCost = cost;
                 position = limb->effector_->currentTransformation().getTranslation();
                 rotation = limb->effector_->currentTransformation().getRotation();
                 normal = rep.result_.contactNormals_.at(limbId);
