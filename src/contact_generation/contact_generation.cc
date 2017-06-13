@@ -737,7 +737,7 @@ std::vector <Vec2D> convexHull(std::vector <Vec2D> set)
         std::vector <Vec2D> sortedSet;
         while(!set.empty())
         {
-            double index(0);
+            unsigned int index(0);
             double min(set[index].x);
             for(unsigned int i = 0; i < set.size(); ++i)
             {
@@ -962,8 +962,8 @@ Vec2D weightedCentroidConvex2D(const std::vector <Vec2D> & convexPolygon)
                         moyX += localSubset[j].x;
                         moyY += localSubset[j].y;
                     }
-                    moyX /= localSubset.size();
-                    moyY /= localSubset.size();
+                    moyX /= static_cast<double>(localSubset.size());
+                    moyY /= static_cast<double>(localSubset.size());
                     finalSet.push_back(Vec2D(moyX, moyY));
                     localSubset.clear();
                     subsetOngoing = false;
@@ -983,8 +983,8 @@ Vec2D weightedCentroidConvex2D(const std::vector <Vec2D> & convexPolygon)
             resX += finalSet[i].x;
             resY += finalSet[i].y;
         }
-        resX /= finalSet.size();
-        resY /= finalSet.size();
+        resX /= static_cast<double>(finalSet.size());
+        resY /= static_cast<double>(finalSet.size());
         res = Vec2D(resX, resY);
     }
     return res;
