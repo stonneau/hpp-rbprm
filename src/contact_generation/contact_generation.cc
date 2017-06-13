@@ -651,7 +651,7 @@ fcl::Vec3f orthogonalProjection(const fcl::Vec3f & point, const Plane & plane)
     double k(((plane.a * point[0]) + (plane.b * point[1]) + (plane.c * point[2]) + plane.d) / (std::pow(plane.a, 2) + std::pow(plane.b, 2) + std::pow(plane.c, 2)));
     return fcl::Vec3f(point[0] - k*plane.a, point[1] - k*plane.b, point[2] - k*plane.c);
 }
-std::vector <Vec2D> compute_support_polygon(const std::map <std::string, fcl::Vec3f> & contactPositions)
+std::vector <Vec2D> computeSupportPolygon(const std::map <std::string, fcl::Vec3f> & contactPositions)
 {
     Plane h_plane(0, 0, 1, 0); // horizontal plane
     std::vector <Vec2D> res;
@@ -991,15 +991,67 @@ Vec2D weightedCentroidConvex2D(const std::vector <Vec2D> & convexPolygon)
 }
 Vec2D computeZMP(const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g)
 {
+    double zAccel(g + comAccel[2]);
+    double epsi(1e-9);
+    double x_zmp, y_zmp;
 
+    // if the z-forces are in balance
+    if(std::abs(zAccel) <= epsi) // zAccel == 0
+    {
+        x_zmp = (std::abs(comAccel[0]) <= epsi) ? std::numeric_limits<double>::quiet_NaN() : std::numeric_limits<double>::infinity(); // NaN if comAccel[0] == 0, Inf otherwise
+        y_zmp = (std::abs(comAccel[1]) <= epsi) ? std::numeric_limits<double>::quiet_NaN() : std::numeric_limits<double>::infinity(); // NaN if comAccel[1] == 0, Inf otherwise
+    }
+    else // if z-forces not in balance
+    {
+        x_zmp = comPos[0] - (comPos[2]/zAccel)*comAccel[0];
+        y_zmp = comPos[1] - (comPos[2]/zAccel)*comAccel[1];
+    }
+    return Vec2D(x_zmp, y_zmp);
 }
 bool isValidZMP(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g)
 {
+    double zAccel(g + comAccel[2]);
+    double epsi(1e-9);
 
+    // if the z-forces are in balance
+    if(std::abs(zAccel) <= epsi) // zAccel == 0
+    {
+        if((std::abs(comAccel[0]) > epsi) || (std::abs(comAccel[1]) > epsi)) // (comAccel[0] != 0) || (comAccel[1] != 0)
+			return false;
+		else
+			return true;
+    }
+
+    // determine the ZMP position
+    double x_zmp(comPos[0] - (comPos[2]/zAccel)*comAccel[0]);
+    double y_zmp(comPos[1] - (comPos[2]/zAccel)*comAccel[1]);
+
+    // return if the ZMP is inside the convex hull of the support polygon (equilibrium for planar contacts) or not (fall)
+    return isInside(Vec2D(x_zmp, y_zmp), convexHull(computeSupportPolygon(state.contactPositions_)));
 }
 double evaluateZMP(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g)
 {
+    double zAccel(g + comAccel[2]);
+    double epsi(1e-9);
 
+    // if the z-forces are in balance
+    if(std::abs(zAccel) <= epsi) // zAccel == 0
+    {
+        if((std::abs(comAccel[0]) > epsi) || (std::abs(comAccel[1]) > epsi)) // (comAccel[0] != 0) || (comAccel[1] != 0)
+			return std::numeric_limits<double>::infinity();
+		else
+			return 0.0;
+    }
+
+    // determine the ZMP position
+    double x_zmp(comPos[0] - (comPos[2]/zAccel)*comAccel[0]);
+    double y_zmp(comPos[1] - (comPos[2]/zAccel)*comAccel[1]);
+
+    // get the center (approximation of the real center) of the convex hull of the support polygon (CHSP)
+    Vec2D wcentroid(weightedCentroidConvex2D(convexHull(computeSupportPolygon(state.contactPositions_))));
+
+    // return the distance to the center of the CHSP (to minimize)
+    return euclideanDist(Vec2D(x_zmp, y_zmp), wcentroid);
 }
 
 } // namespace projection
