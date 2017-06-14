@@ -901,8 +901,16 @@ double orientedAngle2D(const Vec2D & center, const Vec2D & base, const Vec2D & g
     // return the result
     return angle;
 }
-Vec2D straightLineFromPoints2D(const Vec2D & p1, const Vec2D & p2)
+Vec2D straightLineFromPoints2D(const Vec2D & p1, const Vec2D & p2, bool & vert)
 {
+    vert = false;
+    // if the straight line is vertical, the equation is of the form x = p1.x
+    if(std::abs(p1.x - p2.x) <= 1e-9) // p1.x == p2.x
+    {
+        vert = true;
+        return Vec2D(std::numeric_limits<double>::infinity(), std::numeric_limits<double>::quiet_NaN());
+    }
+
     // get the slope
     double a((p2.y - p1.y)/(p2.x - p1.x));
 
@@ -921,11 +929,27 @@ bool isInside(const Vec2D & point, const std::vector <Vec2D> & polygon)
     }
     if(polygon.size() == 2)
     {
-        Vec2D line(straightLineFromPoints2D(polygon.front(), polygon.back()));
-        if(std::abs(point.y - (line[0]*point.x + line[1])) <= 1e-9) // if point.y == line[0]*point.x + line[1]
-            return true;
+        bool isVertical;
+        Vec2D line(straightLineFromPoints2D(polygon.front(), polygon.back(), isVertical));
+        if(isVertical)
+        {
+            if((point.x - polygon[0].x) <= 1e-9) // if point.x == polygon[0].x
+            {
+                if((point.y < std::max(polygon[0].y, polygon[1].y)) && (point.y > std::min(polygon[0].y, polygon[1].y)))
+                    return true;
+                else
+                    return false;
+            }
+            else
+                return false;
+        }
         else
-            return false;
+        {
+            if(std::abs(point.y - (line[0]*point.x + line[1])) <= 1e-9) // if point.y == line[0]*point.x + line[1]
+                return true;
+            else
+                return false;
+        }
     }
 
     // get the winding number (sumAngles == windingNumber*2*pi)
