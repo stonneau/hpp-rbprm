@@ -396,7 +396,7 @@ hpp::rbprm::State findValidCandidate(const ContactGenHelper &contactGenHelper, c
             double cost(std::numeric_limits<double>::max());
             try
             {
-                cost = evaluateZMP(current, comPos, contactGenHelper.acceleration_);
+                cost = evaluateZMP_light(current, comPos, contactGenHelper.acceleration_);
             }
             catch(std::string s)
             {
@@ -683,6 +683,9 @@ std::vector <Vec2D> computeSupportPolygon(const std::map <std::string, fcl::Vec3
 }
 double computeAngle(const Vec2D & center, const Vec2D & end1, const Vec2D & end2)
 {
+    if(end1 == end2)
+        return 0.0;
+
     // build vector1
     Vec2D vector1(end1.x - center.x, end1.y - center.y);
     double norm1(std::sqrt(std::pow(vector1.x, 2) + std::pow(vector1.y, 2)));
@@ -829,6 +832,9 @@ std::vector <Vec2D> convexHull(std::vector <Vec2D> set)
 }
 double orientedAngle2D(const Vec2D & center, const Vec2D & base, const Vec2D & goal)
 {
+    if(base == goal)
+        return 0.0;
+
     // get the two vectors
     Vec2D vbase(base.x - center.x, base.y - center.y);
     Vec2D vgoal(goal.x - center.x, goal.y - center.y);
@@ -895,8 +901,33 @@ double orientedAngle2D(const Vec2D & center, const Vec2D & base, const Vec2D & g
     // return the result
     return angle;
 }
+Vec2D straightLineFromPoints2D(const Vec2D & p1, const Vec2D & p2)
+{
+    // get the slope
+    double a((p2.y - p1.y)/(p2.x - p1.x));
+
+    // get the intercept
+    double b(p1.y - a*p1.x);
+
+    return Vec2D(a, b);
+}
 bool isInside(const Vec2D & point, const std::vector <Vec2D> & polygon)
 {
+    if(polygon.empty())
+        return false;
+    if(polygon.size() == 1)
+    {
+        return (polygon[0] == point) ? true : false;
+    }
+    if(polygon.size() == 2)
+    {
+        Vec2D line(straightLineFromPoints2D(polygon.front(), polygon.back()));
+        if(std::abs(point.y - (line[0]*point.x + line[1])) <= 1e-9) // if point.y == line[0]*point.x + line[1]
+            return true;
+        else
+            return false;
+    }
+
     // get the winding number (sumAngles == windingNumber*2*pi)
     double sumAngles(orientedAngle2D(point, polygon.back(), polygon.front())); // sumAngles is the sum of all subtended angles by each polygon edge from the considered point
     Vec2D base, goal;
@@ -912,7 +943,7 @@ bool isInside(const Vec2D & point, const std::vector <Vec2D> & polygon)
     {
         return false;
     }
-    else if(std::abs(sumAngles - 2*pi) < 1e-5) // if sumAngles == 2*pi --> point is inside polygon
+    else if(std::abs(std::abs(sumAngles) - 2*pi) < 1e-5) // if sumAngles == 2*pi or -2*pi --> point is inside polygon
     {
         return true;
     }
@@ -1025,6 +1056,13 @@ Vec2D computeZMP(const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double 
     }
     return Vec2D(x_zmp, y_zmp);
 }
+Vec2D computeZMP_light(const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g)
+{
+    double x_zmp(comPos[0] - (comPos[2]/g)*comAccel[0]);
+    double y_zmp(comPos[1] - (comPos[2]/g)*comAccel[1]);
+
+    return Vec2D(x_zmp, y_zmp);
+}
 bool isValidZMP(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g)
 {
     double zAccel(g + comAccel[2]);
@@ -1044,6 +1082,12 @@ bool isValidZMP(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, cons
     double y_zmp(comPos[1] - (comPos[2]/zAccel)*comAccel[1]);
 
     // return if the ZMP is inside the convex hull of the support polygon (equilibrium for planar contacts) or not (fall)
+    return isInside(Vec2D(x_zmp, y_zmp), convexHull(computeSupportPolygon(state.contactPositions_)));
+}
+bool isValidZMP_light(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g)
+{
+    double x_zmp(comPos[0] - (comPos[2]/g)*comAccel[0]);
+    double y_zmp(comPos[1] - (comPos[2]/g)*comAccel[1]);
     return isInside(Vec2D(x_zmp, y_zmp), convexHull(computeSupportPolygon(state.contactPositions_)));
 }
 double evaluateZMP(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g)
@@ -1068,6 +1112,14 @@ double evaluateZMP(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, c
     Vec2D wcentroid(weightedCentroidConvex2D(convexHull(computeSupportPolygon(state.contactPositions_))));
 
     // return the distance to the center of the CHSP (to minimize)
+    return euclideanDist(Vec2D(x_zmp, y_zmp), wcentroid);
+}
+double evaluateZMP_light(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g)
+{
+    // determine the ZMP position
+    double x_zmp(comPos[0] - (comPos[2]/g)*comAccel[0]);
+    double y_zmp(comPos[1] - (comPos[2]/g)*comAccel[1]);
+    Vec2D wcentroid(weightedCentroidConvex2D(convexHull(computeSupportPolygon(state.contactPositions_))));
     return euclideanDist(Vec2D(x_zmp, y_zmp), wcentroid);
 }
 

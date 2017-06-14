@@ -170,6 +170,7 @@ struct Plane
 /// \param g The gravity acceleration, default value: -9.80665 m.s-1
 /// \return The position of the ZMP
 Vec2D computeZMP(const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g = -9.80665);
+Vec2D computeZMP_light(const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g = -9.80665);
 
 /// Perform the validation of a contact state according to the ZMP criterion
 /// The ZMP must be inside the convex hull of the support polygon (relevant only for coplanar contacts on the ground horizontal plane)
@@ -181,6 +182,7 @@ Vec2D computeZMP(const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double 
 /// \param g The gravity acceleration, default value: -9.80665 m.s-1
 /// \return true if the contact state is valid, false otherwise
 bool isValidZMP(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g = -9.80665);
+bool isValidZMP_light(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g = -9.80665);
 
 /// Evaluate the cost of a contact state according to the ZMP criterion
 ///
@@ -190,7 +192,7 @@ bool isValidZMP(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, cons
 /// \param g The gravity acceleration, default value: -9.80665 m.s-1
 /// \return The cost of the considered contact state (the lower the cost is, the better the contact state is --> cost to minimize)
 double evaluateZMP(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g = -9.80665);
-
+double evaluateZMP_light(const hpp::rbprm::State & state, const fcl::Vec3f & comPos, const fcl::Vec3f & comAccel, double g = -9.80665);
 
     } // namespace projection
   } // namespace rbprm
