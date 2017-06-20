@@ -18,7 +18,7 @@ namespace sampling{
         bool lightVersion_; // To true if we don't want to consider z-CoM accelerations
         double g_; // The gravity acceleration
 
-        ZMPHeuristicParam() : g_(-9.80665) {}
+        ZMPHeuristicParam() : lightVersion_(true), g_(-9.80665) {}
         ZMPHeuristicParam(const std::map<std::string, fcl::Vec3f> & cp, const fcl::Vec3f & comAcc, const fcl::Vec3f & comPos, const std::string & sln, bool lv = true);
         ZMPHeuristicParam(const ZMPHeuristicParam & zhp);
 

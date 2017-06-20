@@ -129,10 +129,17 @@ ContactComputationStatus ComputeStableContact(const hpp::rbprm::RbPrmFullBodyPtr
                           bool contactIfFails = true, bool stableForOneContact = true,
                           const sampling::heuristic evaluate = 0)
 {
-    contact::ContactGenHelper contactGenHelper(body,current,current.configuration_,affordances,affFilters,robustnessTreshold,1,1,false,false,
+    std::size_t maxContactBreaks(static_cast<std::size_t>(body->getMaxContactBreaks()));
+    contact::ContactGenHelper contactGenHelper(body,current,current.configuration_,affordances,affFilters,robustnessTreshold,maxContactBreaks,1,false,false,
                                       direction,acceleration,contactIfFails,stableForOneContact);
+    sampling::ZMPHeuristicParam params;
+    params.contactPositions_ = current.contactPositions_;
+    params.comAcceleration_ = contactGenHelper.acceleration_;
+    contactGenHelper.fullBody_->device_->computeForwardKinematics();
+    params.comPosition_ = contactGenHelper.fullBody_->device_->positionCenterOfMass();
+    params.sampleLimbName_ = limbId;
 
-    hpp::rbprm::projection::ProjectionReport rep = contact::generate_contact(contactGenHelper,limbId,evaluate);
+    hpp::rbprm::projection::ProjectionReport rep = contact::generate_contact(contactGenHelper,limbId,params,evaluate);
     current = rep.result_;
     configuration = rep.result_.configuration_;
     if(rep.status_ != NO_CONTACT)
