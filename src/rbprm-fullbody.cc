@@ -149,7 +149,7 @@ namespace hpp {
     }
 
     RbPrmFullBody::RbPrmFullBody (const model::DevicePtr_t& device)
-        : device_(device), maxContactBreaks_(2), zmpCostThreshold_(0.2)
+        : device_(device), maxContactBreaks_(2)
         , collisionValidation_(core::CollisionValidation::create(device))
         , staticStability_(true)
         , mu_(0.5)
