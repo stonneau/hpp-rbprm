@@ -377,7 +377,6 @@ hpp::rbprm::State findValidCandidate(const ContactGenHelper &contactGenHelper, c
     core::Configuration_t moreRobust, configuration;
     configuration = current.configuration_;
     double maxRob = -std::numeric_limits<double>::max();
-    fcl::Vec3f comPos;
     sampling::T_OctreeReport::const_iterator it = finalSet.begin();
     fcl::Vec3f position, normal;
     fcl::Matrix3f rotation;
