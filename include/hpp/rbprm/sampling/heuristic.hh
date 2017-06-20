@@ -20,6 +20,7 @@
 # define HPP_HEURISTIC_HH
 
 #include <hpp/rbprm/sampling/sample.hh>
+#include <hpp/rbprm/sampling/heuristic-tools.hh>
 
 #include <map>
 

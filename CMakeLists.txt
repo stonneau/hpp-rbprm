@@ -92,6 +92,7 @@ SET(${PROJECT_NAME}_HEADERS
     include/hpp/rbprm/rbprm-rom-validation.hh
     include/hpp/rbprm/sampling/sample.hh
     include/hpp/rbprm/sampling/sample-db.hh
+    include/hpp/rbprm/sampling/heuristic-tools.hh
     include/hpp/rbprm/sampling/heuristic.hh
     include/hpp/rbprm/sampling/analysis.hh
     include/hpp/rbprm/stability/stability.hh

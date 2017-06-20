@@ -24,8 +24,41 @@ using namespace hpp::model;
 using namespace hpp::rbprm;
 using namespace hpp::rbprm::sampling;
 
-namespace
+double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & direction, const Eigen::Vector3d & normal, const ZMPHeuristicParam & params)
 {
+    std::map <std::string, fcl::Vec3f> contacts;
+    contacts.insert(params.contactPositions_.begin(), params.contactPositions_.end());
+    contacts.insert(std::make_pair(params.sampleLimbName_, sample.effectorPosition_));
+
+    Vec2D zmp;
+    double g(params.g_);
+
+    if(params.lightVersion_)
+    {
+        double x_zmp(params.comPosition_[0] - (params.comPosition_[2]/g)*params.comAcceleration_[0]);
+        double y_zmp(params.comPosition_[1] - (params.comPosition_[2]/g)*params.comAcceleration_[1]);
+        zmp = Vec2D(x_zmp, y_zmp);
+    }
+    else
+    {
+        double zAccel(g + params.comAcceleration_[2]);
+        double epsi(1e-9);
+        // if the z-forces are in balance
+        if(std::abs(zAccel) <= epsi) // zAccel == 0
+        {
+            if((std::abs(params.comAcceleration_[0]) > epsi) || (std::abs(params.comAcceleration_[1]) > epsi)) // (params.comAcceleration_[0] != 0) || (params.comAcceleration_[1] != 0)
+                return std::numeric_limits<double>::infinity();
+            else
+                return 0.0;
+        }
+        double x_zmp(params.comPosition_[0] - (params.comPosition_[2]/zAccel)*params.comAcceleration_[0]);
+        double y_zmp(params.comPosition_[1] - (params.comPosition_[2]/zAccel)*params.comAcceleration_[1]);
+        zmp = Vec2D(x_zmp, y_zmp);
+    }
+    Vec2D wcentroid(weightedCentroidConvex2D(convexHull(computeSupportPolygon(contacts))));
+    return std::sqrt(std::pow(zmp.x - wcentroid.x, 2) + std::pow(zmp.y - wcentroid.y, 2));
+}
+
 double EFORTHeuristic(const sampling::Sample& sample,
                       const Eigen::Vector3d& direction, const Eigen::Vector3d& normal)
 {
@@ -89,7 +122,6 @@ double DistanceToLimitHeuristic(const sampling::Sample& sample,
                       const Eigen::Vector3d& /*direction*/, const Eigen::Vector3d& /*normal*/)
 {
     return sample.configuration_.norm();
-}
 }
 
 HeuristicFactory::HeuristicFactory()
