@@ -131,7 +131,7 @@ double DistanceToLimitHeuristic(const sampling::Sample& sample,
 
 double ForwardZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & direction, const Eigen::Vector3d & normal, const ZMPHeuristicParam & params)
 {
-    return (4.0*ZMPHeuristic(sample, direction, normal, params) + 0.25*ForwardHeuristic(sample, direction, normal, params));
+    return (10.0*ZMPHeuristic(sample, direction, normal, params) + ForwardHeuristic(sample, direction, normal, params)/10000.0);
 }
 
 HeuristicFactory::HeuristicFactory()
