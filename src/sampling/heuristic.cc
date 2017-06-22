@@ -60,6 +60,7 @@ double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*d
     try
     {
         Vec2D wcentroid(weightedCentroidConvex2D(convexHull(computeSupportPolygon(contacts))));
+        //std::cout << "zmp : " << zmp << " -- centroid : " << wcentroid << std::endl;
         result = std::sqrt(std::pow(zmp.x - wcentroid.x, 2) + std::pow(zmp.y - wcentroid.y, 2));
     }
     catch(std::string s)
@@ -140,7 +141,7 @@ double ForwardZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3
 {
     double z_coeff(10);
     double f_coeff(1.0/200000);
-    std::cout << params.comAcceleration_ << std::endl;
+    //std::cout << params.comAcceleration_ << std::endl;
     //std::cout << "ZMP_h : " << z_coeff/(0.1-ZMPHeuristic(sample, direction, normal, params)) << " -- Forward_h : " << f_coeff*ForwardHeuristic(sample, direction, normal, params) << std::endl;
     return (z_coeff/(0.1-ZMPHeuristic(sample, direction, normal, params)) + f_coeff*ForwardHeuristic(sample, direction, normal, params));
 }
