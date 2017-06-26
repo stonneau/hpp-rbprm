@@ -62,7 +62,7 @@ double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*d
         Vec2D wcentroid(weightedCentroidConvex2D(convexHull(computeSupportPolygon(contacts))));
         //std::cout << "zmp : " << zmp << " -- centroid : " << wcentroid << std::endl;
         result = std::sqrt(std::pow(zmp.x - wcentroid.x, 2) + std::pow(zmp.y - wcentroid.y, 2));
-        //std::cout << "zmp > centroid ? " << (zmp.x > wcentroid.x) << " -- of : " << result << std::endl;
+        //std::cout << "zmp.x > centroid.x ? " << (zmp.x > wcentroid.x) << " -- of : " << result << std::endl;
     }
     catch(std::string s)
     {
