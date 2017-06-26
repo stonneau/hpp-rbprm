@@ -19,6 +19,8 @@
 
 #include <Eigen/Eigen>
 
+//#define DEBUG_LOG
+
 using namespace hpp;
 using namespace hpp::model;
 using namespace hpp::rbprm;
@@ -29,6 +31,7 @@ double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*d
     std::map <std::string, fcl::Vec3f> contacts;
     contacts.insert(params.contactPositions_.begin(), params.contactPositions_.end());
     contacts.insert(std::make_pair(params.sampleLimbName_, sample.effectorPosition_));
+    //std::cout << sample.effectorPosition_ << std::endl;
 
     Vec2D zmp;
     double g(params.g_);
@@ -63,6 +66,20 @@ double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*d
         //std::cout << "zmp : " << zmp << " -- centroid : " << wcentroid << std::endl;
         result = std::sqrt(std::pow(zmp.x - wcentroid.x, 2) + std::pow(zmp.y - wcentroid.y, 2));
         //std::cout << "zmp.x > centroid.x ? " << (zmp.x > wcentroid.x) << " -- of : " << result << std::endl;
+#ifdef DEBUG_LOG
+        std::string zmplog("/local/localrlefevre/works/zmplog.txt");
+        std::ofstream logFlow(zmplog.c_str(), std::ios::app);
+        if(logFlow)
+        {
+            logFlow << "Contacts Positions : " << std::endl;
+            for(std::map<std::string, fcl::Vec3f>::const_iterator cit = contacts.begin(); cit != contacts.end(); ++cit)
+                logFlow << "   " << cit->second << std::endl;
+            logFlow << "Centroid" << std::endl << "   " << wcentroid << std::endl;
+            logFlow << "ZMP Position : " << std::endl << "   " << zmp << std::endl;
+        }
+        else
+            std::cout << "Could not open " << zmplog << std::endl;
+#endif
     }
     catch(std::string s)
     {
