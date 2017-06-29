@@ -28,10 +28,11 @@ using namespace hpp::rbprm::sampling;
 
 double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*direction*/, const Eigen::Vector3d & /*normal*/, const ZMPHeuristicParam & params)
 {
+    fcl::Vec3f effectorPosition = transform(sample.effectorPosition_, params.tfRootWorld_.getTranslation(), params.tfRootWorld_.getRotation());
+
     std::map <std::string, fcl::Vec3f> contacts;
     contacts.insert(params.contactPositions_.begin(), params.contactPositions_.end());
-    contacts.insert(std::make_pair(params.sampleLimbName_, sample.effectorPosition_));
-    //std::cout << sample.effectorPosition_ << std::endl;
+    contacts.insert(std::make_pair(params.sampleLimbName_, effectorPosition));
 
     Vec2D zmp;
     double g(params.g_);
@@ -63,9 +64,7 @@ double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*d
     try
     {
         Vec2D wcentroid(weightedCentroidConvex2D(convexHull(computeSupportPolygon(contacts))));
-        //std::cout << "zmp : " << zmp << " -- centroid : " << wcentroid << std::endl;
         result = std::sqrt(std::pow(zmp.x - wcentroid.x, 2) + std::pow(zmp.y - wcentroid.y, 2));
-        //std::cout << "zmp.x > centroid.x ? " << (zmp.x > wcentroid.x) << " -- of : " << result << std::endl;
 #ifdef DEBUG_LOG
         std::string zmplog("/local/localrlefevre/works/zmplog.txt");
         std::ofstream logFlow(zmplog.c_str(), std::ios::app);
@@ -86,7 +85,6 @@ double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*d
         std::cout << s << std::endl;
         result = std::numeric_limits<double>::max();
     }
-    //std::cout << "sample : " << sample.effectorPosition_ << " -- quality : " << -result << std::endl;
     return -result; // '-' because minimize a value is equivalent to maximimze its opposite
 }
 

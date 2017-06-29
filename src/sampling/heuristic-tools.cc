@@ -5,17 +5,19 @@ namespace rbprm{
 namespace sampling{
 
 ZMPHeuristicParam::ZMPHeuristicParam(const std::map<std::string, fcl::Vec3f> & cp, const fcl::Vec3f & comAcc,
-                                     const fcl::Vec3f & comPos, const std::string & sln, bool lv) : contactPositions_(cp),
-                                                                                                    comAcceleration_(comAcc),
-                                                                                                    comPosition_(comPos),
-                                                                                                    sampleLimbName_(sln),
-                                                                                                    lightVersion_(lv),
-                                                                                                    g_(-9.80665)
+                                     const fcl::Vec3f & comPos, const std::string & sln, const fcl::Transform3f & tf, bool lv) : contactPositions_(cp),
+                                                                                                                                 comAcceleration_(comAcc),
+                                                                                                                                 comPosition_(comPos),
+                                                                                                                                 sampleLimbName_(sln),
+                                                                                                                                 tfRootWorld_(tf),
+                                                                                                                                 lightVersion_(lv),
+                                                                                                                                 g_(-9.80665)
 {}
 ZMPHeuristicParam::ZMPHeuristicParam(const ZMPHeuristicParam & zhp) : contactPositions_(zhp.contactPositions_),
                                                                         comAcceleration_(zhp.comAcceleration_),
                                                                         comPosition_(zhp.comPosition_),
                                                                         sampleLimbName_(zhp.sampleLimbName_),
+                                                                        tfRootWorld_(zhp.tfRootWorld_),
                                                                         lightVersion_(zhp.lightVersion_),
                                                                         g_(-9.80665)
 {}
@@ -28,9 +30,20 @@ ZMPHeuristicParam & ZMPHeuristicParam::operator=(const ZMPHeuristicParam & zhp)
         this->comAcceleration_ = zhp.comAcceleration_;
         this->comPosition_ = zhp.comPosition_;
         this->sampleLimbName_ = zhp.sampleLimbName_;
+        this->tfRootWorld_ = zhp.tfRootWorld_;
         this->lightVersion_ = zhp.lightVersion_;
     }
     return *this;
+}
+
+fcl::Vec3f transform(const fcl::Vec3f & p, const fcl::Vec3f & tr, const fcl::Matrix3f & ro)
+{
+    fcl::Vec3f res(
+        p[0]*ro(0,0) + p[1]*ro(0,1) + p[2]*ro(0,2) + tr[0],
+        p[0]*ro(1,0) + p[1]*ro(1,1) + p[2]*ro(1,2) + tr[1],
+        p[0]*ro(2,0) + p[1]*ro(2,1) + p[2]*ro(2,2) + tr[2]
+    );
+    return res;
 }
 
 Vec2D & Vec2D::operator=(const Vec2D & c)

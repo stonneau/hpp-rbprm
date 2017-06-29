@@ -138,6 +138,7 @@ ContactComputationStatus ComputeStableContact(const hpp::rbprm::RbPrmFullBodyPtr
     contactGenHelper.fullBody_->device_->computeForwardKinematics();
     params.comPosition_ = contactGenHelper.fullBody_->device_->positionCenterOfMass();
     params.sampleLimbName_ = limbId;
+    params.tfRootWorld_ = contactGenHelper.fullBody_->device_->rootJoint()->currentTransformation();
 
     hpp::rbprm::projection::ProjectionReport rep = contact::generate_contact(contactGenHelper,limbId,params,evaluate);
     current = rep.result_;

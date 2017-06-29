@@ -15,15 +15,25 @@ namespace sampling{
         fcl::Vec3f comAcceleration_; // The CoM acceleration
         fcl::Vec3f comPosition_; // The CoM position
         std::string sampleLimbName_; // The name of the considered sample
+        fcl::Transform3f tfRootWorld_; // The transform between the root of the robot and the world coordinate system
         bool lightVersion_; // To true if we don't want to consider z-CoM accelerations
         double g_; // The gravity acceleration
 
         ZMPHeuristicParam() : lightVersion_(true), g_(-9.80665) {}
-        ZMPHeuristicParam(const std::map<std::string, fcl::Vec3f> & cp, const fcl::Vec3f & comAcc, const fcl::Vec3f & comPos, const std::string & sln, bool lv = true);
+        ZMPHeuristicParam(const std::map<std::string, fcl::Vec3f> & cp, const fcl::Vec3f & comAcc, const fcl::Vec3f & comPos,
+                          const std::string & sln, const fcl::Transform3f & tf, bool lv = true);
         ZMPHeuristicParam(const ZMPHeuristicParam & zhp);
 
         ZMPHeuristicParam & operator=(const ZMPHeuristicParam & zhp);
     };
+
+    /// Computes the transform of a point
+    ///
+    /// \param p The considered point
+    /// \param tr The translation to apply
+    /// \param ro The rotation to apply
+    /// \return The transformed point
+    fcl::Vec3f transform(const fcl::Vec3f & p, const fcl::Vec3f & tr, const fcl::Matrix3f & ro);
 
     /// Data structure to store 2-dimensional informations (2D vectors)
     struct Vec2D
