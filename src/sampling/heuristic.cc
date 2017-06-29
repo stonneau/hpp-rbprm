@@ -137,15 +137,6 @@ double DistanceToLimitHeuristic(const sampling::Sample& sample,
     return sample.configuration_.norm();
 }
 
-double ForwardZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & direction, const Eigen::Vector3d & normal, const ZMPHeuristicParam & params)
-{
-    double z_coeff(10);
-    double f_coeff(1.0/200000);
-    //std::cout << params.comAcceleration_ << std::endl;
-    //std::cout << "ZMP_h : " << z_coeff/(0.1-ZMPHeuristic(sample, direction, normal, params)) << " -- Forward_h : " << f_coeff*ForwardHeuristic(sample, direction, normal, params) << std::endl;
-    return (z_coeff/(0.1-ZMPHeuristic(sample, direction, normal, params)) + f_coeff*ForwardHeuristic(sample, direction, normal, params));
-}
-
 HeuristicFactory::HeuristicFactory()
 {
     unsigned int seed =  (unsigned int) (time(NULL)) ;
@@ -173,7 +164,6 @@ HeuristicFactory::HeuristicFactory()
     heuristics_.insert(std::make_pair("backward", &BackwardHeuristic));
     heuristics_.insert(std::make_pair("jointlimits", &DistanceToLimitHeuristic));
     heuristics_.insert(std::make_pair("ZMP", &ZMPHeuristic));
-    heuristics_.insert(std::make_pair("ForwardZMP", &ForwardZMPHeuristic));
 }
 
 HeuristicFactory::~HeuristicFactory(){}
