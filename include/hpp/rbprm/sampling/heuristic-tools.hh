@@ -15,7 +15,7 @@ namespace sampling{
         fcl::Vec3f comAcceleration_; // The CoM acceleration
         fcl::Vec3f comPosition_; // The CoM position
         std::string sampleLimbName_; // The name of the considered sample
-        fcl::Transform3f tfRootWorld_; // The transform between the root of the robot and the world coordinate system
+        fcl::Transform3f tfWorldRoot_; // The transform between the world coordinate system and the root of the robot
         bool lightVersion_; // To true if we don't want to consider z-CoM accelerations
         double g_; // The gravity acceleration
 

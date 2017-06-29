@@ -518,7 +518,7 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
             contactGenHelper.fullBody_->device_->computeForwardKinematics();
             params.comPosition_ = contactGenHelper.fullBody_->device_->positionCenterOfMass();
             params.sampleLimbName_ = *cit;
-            params.tfRootWorld_ = contactGenHelper.fullBody_->device_->rootJoint()->currentTransformation();
+            params.tfWorldRoot_ = contactGenHelper.fullBody_->device_->rootJoint()->currentTransformation();
 
             if(cit+1 == cState.second.end())
                 contactGenHelper.checkStabilityGenerate_ = checkStability;
@@ -568,7 +568,7 @@ projection::ProjectionReport repositionContacts(ContactGenHelper& helper)
             helper.fullBody_->device_->computeForwardKinematics();
             params.comPosition_ = helper.fullBody_->device_->positionCenterOfMass();
             params.sampleLimbName_ = *cit;
-            params.tfRootWorld_ = helper.fullBody_->device_->rootJoint()->currentTransformation();
+            params.tfWorldRoot_ = helper.fullBody_->device_->rootJoint()->currentTransformation();
 
             projection::ProjectionReport rep = contact::generate_contact(helper,*cit,params);
             if(rep.status_ == STABLE_CONTACT)

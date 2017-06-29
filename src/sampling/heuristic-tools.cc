@@ -9,7 +9,7 @@ ZMPHeuristicParam::ZMPHeuristicParam(const std::map<std::string, fcl::Vec3f> & c
                                                                                                                                  comAcceleration_(comAcc),
                                                                                                                                  comPosition_(comPos),
                                                                                                                                  sampleLimbName_(sln),
-                                                                                                                                 tfRootWorld_(tf),
+                                                                                                                                 tfWorldRoot_(tf),
                                                                                                                                  lightVersion_(lv),
                                                                                                                                  g_(-9.80665)
 {}
@@ -17,7 +17,7 @@ ZMPHeuristicParam::ZMPHeuristicParam(const ZMPHeuristicParam & zhp) : contactPos
                                                                         comAcceleration_(zhp.comAcceleration_),
                                                                         comPosition_(zhp.comPosition_),
                                                                         sampleLimbName_(zhp.sampleLimbName_),
-                                                                        tfRootWorld_(zhp.tfRootWorld_),
+                                                                        tfWorldRoot_(zhp.tfWorldRoot_),
                                                                         lightVersion_(zhp.lightVersion_),
                                                                         g_(-9.80665)
 {}
@@ -30,7 +30,7 @@ ZMPHeuristicParam & ZMPHeuristicParam::operator=(const ZMPHeuristicParam & zhp)
         this->comAcceleration_ = zhp.comAcceleration_;
         this->comPosition_ = zhp.comPosition_;
         this->sampleLimbName_ = zhp.sampleLimbName_;
-        this->tfRootWorld_ = zhp.tfRootWorld_;
+        this->tfWorldRoot_ = zhp.tfWorldRoot_;
         this->lightVersion_ = zhp.lightVersion_;
     }
     return *this;

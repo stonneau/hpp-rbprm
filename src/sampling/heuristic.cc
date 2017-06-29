@@ -26,7 +26,7 @@ using namespace hpp::rbprm::sampling;
 
 double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*direction*/, const Eigen::Vector3d & /*normal*/, const ZMPHeuristicParam & params)
 {
-    fcl::Vec3f effectorPosition = transform(sample.effectorPosition_, params.tfRootWorld_.getTranslation(), params.tfRootWorld_.getRotation());
+    fcl::Vec3f effectorPosition = transform(sample.effectorPosition_, params.tfWorldRoot_.getTranslation(), params.tfWorldRoot_.getRotation());
 
     std::map <std::string, fcl::Vec3f> contacts;
     contacts.insert(params.contactPositions_.begin(), params.contactPositions_.end());
