@@ -71,6 +71,18 @@ double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*d
     }
     return -result; // '-' because minimize a value is equivalent to maximimze its opposite
 }
+double StraightCentroidHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & direction, const Eigen::Vector3d & /*normal*/, const HeuristicParam & params)
+{
+    if(params.previousContactPositions_.empty())
+    {
+        // Try to keep the centroid vector (formed by the previous centroid and the current centroid) aligned with the direction vector of movement
+        // TODO
+    }
+    else
+    {
+        //TODO
+    }
+}
 
 double EFORTHeuristic(const sampling::Sample& sample,
                       const Eigen::Vector3d& direction, const Eigen::Vector3d& normal, const HeuristicParam & /*params*/)
@@ -164,6 +176,7 @@ HeuristicFactory::HeuristicFactory()
     heuristics_.insert(std::make_pair("backward", &BackwardHeuristic));
     heuristics_.insert(std::make_pair("jointlimits", &DistanceToLimitHeuristic));
     heuristics_.insert(std::make_pair("ZMP", &ZMPHeuristic));
+    heuristics_.insert(std::make_pair("straightCentroid", &StraightCentroidHeuristic));
 }
 
 HeuristicFactory::~HeuristicFactory(){}
