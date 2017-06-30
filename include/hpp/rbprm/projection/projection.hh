@@ -74,6 +74,9 @@ ProjectionReport  HPP_RBPRM_DLLAPI setCollisionFree(hpp::rbprm::RbPrmFullBodyPtr
 ProjectionReport HPP_RBPRM_DLLAPI projectStateToObstacle(const hpp::rbprm::RbPrmFullBodyPtr_t& body, const std::string& limbId, const hpp::rbprm::RbPrmLimbPtr_t& limb,
                                                          const hpp::rbprm::State& current, const fcl::Vec3f &normal, const fcl::Vec3f &position);
 
+ProjectionReport HPP_RBPRM_DLLAPI projectLimbToObstacle(const hpp::rbprm::RbPrmFullBodyPtr_t& body, const std::string& limbId, const hpp::rbprm::RbPrmLimbPtr_t& limb,
+                                        const hpp::rbprm::State& current, const fcl::Vec3f &normal, const fcl::Vec3f &position);
+
 ProjectionReport HPP_RBPRM_DLLAPI projectStateToObstacle(const hpp::rbprm::RbPrmFullBodyPtr_t& body, const std::string& limbId, const hpp::rbprm::RbPrmLimbPtr_t& limb,
                                                          const hpp::rbprm::State& current, const fcl::Vec3f &normal, const fcl::Vec3f &position, core::CollisionValidationPtr_t validation);
 
