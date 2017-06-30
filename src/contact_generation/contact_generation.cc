@@ -336,7 +336,7 @@ ProjectionReport maintain_contacts(ContactGenHelper &contactGenHelper)
 
 
 sampling::T_OctreeReport CollideOctree(const ContactGenHelper &contactGenHelper, const std::string& limbName,
-                                                    RbPrmLimbPtr_t limb, const sampling::heuristic evaluate, const sampling::ZMPHeuristicParam & params)
+                                                    RbPrmLimbPtr_t limb, const sampling::heuristic evaluate, const sampling::HeuristicParam & params)
 {
     fcl::Transform3f transform = limb->octreeRoot(); // get root transform from configuration
     hpp::model::ObjectVector_t affordances = getAffObjectsForLimb (limbName,contactGenHelper.affordances_, contactGenHelper.affFilters_);
@@ -369,7 +369,7 @@ sampling::T_OctreeReport CollideOctree(const ContactGenHelper &contactGenHelper,
 
 hpp::rbprm::State findValidCandidate(const ContactGenHelper &contactGenHelper, const std::string& limbId,
                         RbPrmLimbPtr_t limb, core::CollisionValidationPtr_t validation, bool& found_sample,
-                                     bool& unstableContact, const sampling::ZMPHeuristicParam & params, const sampling::heuristic evaluate = 0)
+                                     bool& unstableContact, const sampling::HeuristicParam & params, const sampling::heuristic evaluate = 0)
 {
     State current = contactGenHelper.workingState_;
     current.stable = false;
@@ -432,7 +432,7 @@ hpp::rbprm::State findValidCandidate(const ContactGenHelper &contactGenHelper, c
     return current;
 }
 
-ProjectionReport generate_contact(const ContactGenHelper &contactGenHelper, const std::string& limbName, const sampling::ZMPHeuristicParam & params,
+ProjectionReport generate_contact(const ContactGenHelper &contactGenHelper, const std::string& limbName, const sampling::HeuristicParam & params,
                                   const sampling::heuristic evaluate)
 {
     ProjectionReport rep;
@@ -512,8 +512,9 @@ ProjectionReport gen_contacts(ContactGenHelper &contactGenHelper)
             cit != cState.second.end(); ++cit)
         {
             // define the ZMP heuristic parameters
-            sampling::ZMPHeuristicParam params;
+            sampling::HeuristicParam params;
             params.contactPositions_ = cState.first.contactPositions_;
+            params.previousContactPositions_ = contactGenHelper.previousState_.contactPositions_;
             params.comAcceleration_ = contactGenHelper.acceleration_;
             contactGenHelper.fullBody_->device_->computeForwardKinematics();
             params.comPosition_ = contactGenHelper.fullBody_->device_->positionCenterOfMass();
@@ -562,8 +563,9 @@ projection::ProjectionReport repositionContacts(ContactGenHelper& helper)
             result.RemoveContact(*cit);
             helper.workingState_ = result;
 
-            sampling::ZMPHeuristicParam params;
+            sampling::HeuristicParam params;
             params.contactPositions_ = helper.workingState_.contactPositions_;
+            params.previousContactPositions_ = helper.previousState_.contactPositions_;
             params.comAcceleration_ = helper.acceleration_;
             helper.fullBody_->device_->computeForwardKinematics();
             params.comPosition_ = helper.fullBody_->device_->positionCenterOfMass();

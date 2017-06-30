@@ -9,9 +9,10 @@ namespace rbprm{
 namespace sampling{
     
     /// Defines a parameters set for the ZMP-based heuristic
-    struct ZMPHeuristicParam
+    struct HeuristicParam
     {
         std::map<std::string, fcl::Vec3f> contactPositions_; // to get the others contacts (without the considered sample)
+        std::map<std::string, fcl::Vec3f> previousContactPositions_; // to get the contacts positions at the previous state
         fcl::Vec3f comAcceleration_; // The CoM acceleration
         fcl::Vec3f comPosition_; // The CoM position
         std::string sampleLimbName_; // The name of the considered sample
@@ -19,12 +20,12 @@ namespace sampling{
         bool lightVersion_; // To true if we don't want to consider z-CoM accelerations
         double g_; // The gravity acceleration
 
-        ZMPHeuristicParam() : lightVersion_(true), g_(-9.80665) {}
-        ZMPHeuristicParam(const std::map<std::string, fcl::Vec3f> & cp, const fcl::Vec3f & comAcc, const fcl::Vec3f & comPos,
-                          const std::string & sln, const fcl::Transform3f & tf, bool lv = true);
-        ZMPHeuristicParam(const ZMPHeuristicParam & zhp);
+        HeuristicParam() : lightVersion_(false), g_(-9.80665) {}
+        HeuristicParam(const std::map<std::string, fcl::Vec3f> & cp, const std::map<std::string, fcl::Vec3f> & ocp, const fcl::Vec3f & comAcc, const fcl::Vec3f & comPos,
+                          const std::string & sln, const fcl::Transform3f & tf, bool lv = false);
+        HeuristicParam(const HeuristicParam & zhp);
 
-        ZMPHeuristicParam & operator=(const ZMPHeuristicParam & zhp);
+        HeuristicParam & operator=(const HeuristicParam & zhp);
     };
 
     /// Computes the transform of a point

@@ -38,7 +38,7 @@ namespace hpp {
   /// \param direction overall direction of motion
   /// \param normal contact surface normal relatively to the candidate
   typedef double (*heuristic) (const sampling::Sample& sample,
-                               const Eigen::Vector3d& direction, const Eigen::Vector3d& normal, const ZMPHeuristicParam & params);
+                               const Eigen::Vector3d& direction, const Eigen::Vector3d& normal, const HeuristicParam & params);
 
   /// Defines a set of existing heuristics for biasing the sample candidate selection
   ///

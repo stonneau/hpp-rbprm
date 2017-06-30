@@ -24,7 +24,7 @@ using namespace hpp::model;
 using namespace hpp::rbprm;
 using namespace hpp::rbprm::sampling;
 
-double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*direction*/, const Eigen::Vector3d & /*normal*/, const ZMPHeuristicParam & params)
+double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*direction*/, const Eigen::Vector3d & /*normal*/, const HeuristicParam & params)
 {
     fcl::Vec3f effectorPosition = transform(sample.effectorPosition_, params.tfWorldRoot_.getTranslation(), params.tfWorldRoot_.getRotation());
 
@@ -73,35 +73,35 @@ double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*d
 }
 
 double EFORTHeuristic(const sampling::Sample& sample,
-                      const Eigen::Vector3d& direction, const Eigen::Vector3d& normal, const ZMPHeuristicParam & /*params*/)
+                      const Eigen::Vector3d& direction, const Eigen::Vector3d& normal, const HeuristicParam & /*params*/)
 {
     double EFORT = -direction.transpose() * sample.jacobianProduct_.block<3,3>(0,0) * (-direction);
     return EFORT * Eigen::Vector3d::UnitZ().dot(normal);
 }
 
 double EFORTNormalHeuristic(const sampling::Sample& sample,
-                      const Eigen::Vector3d& direction, const Eigen::Vector3d& normal, const ZMPHeuristicParam & /*params*/)
+                      const Eigen::Vector3d& direction, const Eigen::Vector3d& normal, const HeuristicParam & /*params*/)
 {
     double EFORT = -direction.transpose() * sample.jacobianProduct_.block<3,3>(0,0) * (-direction);
     return EFORT * direction.dot(normal);
 }
 
 double ManipulabilityHeuristic(const sampling::Sample& sample,
-                               const Eigen::Vector3d& /*direction*/, const Eigen::Vector3d& normal, const ZMPHeuristicParam & /*params*/)
+                               const Eigen::Vector3d& /*direction*/, const Eigen::Vector3d& normal, const HeuristicParam & /*params*/)
 {
     if(Eigen::Vector3d::UnitZ().dot(normal) < 0.7) return -1;
     return sample.staticValue_ * 10000 * Eigen::Vector3d::UnitZ().dot(normal) * 100000  +  ((double)rand()) / ((double)(RAND_MAX));
 }
 
 double RandomHeuristic(const sampling::Sample& /*sample*/,
-                       const Eigen::Vector3d& /*direction*/, const Eigen::Vector3d& /*normal*/, const ZMPHeuristicParam & /*params*/)
+                       const Eigen::Vector3d& /*direction*/, const Eigen::Vector3d& /*normal*/, const HeuristicParam & /*params*/)
 {
     return ((double)rand()) / ((double)(RAND_MAX));
 }
 
 
 double ForwardHeuristic(const sampling::Sample& sample,
-                      const Eigen::Vector3d& direction, const Eigen::Vector3d& normal, const ZMPHeuristicParam & /*params*/)
+                      const Eigen::Vector3d& direction, const Eigen::Vector3d& normal, const HeuristicParam & /*params*/)
 {
     return sample.staticValue_ * 10000 * Eigen::Vector3d::UnitZ().dot(normal) * 100  + sample.effectorPosition_.dot(fcl::Vec3f(direction(0),direction(1),direction(2))) + ((double)rand()) / ((double)(RAND_MAX));
 }
@@ -109,13 +109,13 @@ double ForwardHeuristic(const sampling::Sample& sample,
 
 
 double BackwardHeuristic(const sampling::Sample& sample,
-                      const Eigen::Vector3d& direction, const Eigen::Vector3d& normal, const ZMPHeuristicParam & /*params*/)
+                      const Eigen::Vector3d& direction, const Eigen::Vector3d& normal, const HeuristicParam & /*params*/)
 {
     return sample.staticValue_ * 10000 * Eigen::Vector3d::UnitZ().dot(normal) * 100  - sample.effectorPosition_.dot(fcl::Vec3f(direction(0),direction(1),direction(2))) + ((double)rand()) / ((double)(RAND_MAX));
 }
 
 double StaticHeuristic(const sampling::Sample& sample,
-                      const Eigen::Vector3d& /*direction*/, const Eigen::Vector3d& /*normal*/, const ZMPHeuristicParam & /*params*/)
+                      const Eigen::Vector3d& /*direction*/, const Eigen::Vector3d& /*normal*/, const HeuristicParam & /*params*/)
 {
     /*hppDout(info,"sample : ");
     hppDout(info,"sample : "<<&sample);
@@ -132,7 +132,7 @@ double StaticHeuristic(const sampling::Sample& sample,
 
 
 double DistanceToLimitHeuristic(const sampling::Sample& sample,
-                      const Eigen::Vector3d& /*direction*/, const Eigen::Vector3d& /*normal*/, const ZMPHeuristicParam & /*params*/)
+                      const Eigen::Vector3d& /*direction*/, const Eigen::Vector3d& /*normal*/, const HeuristicParam & /*params*/)
 {
     return sample.configuration_.norm();
 }

@@ -4,29 +4,33 @@ namespace hpp{
 namespace rbprm{
 namespace sampling{
 
-ZMPHeuristicParam::ZMPHeuristicParam(const std::map<std::string, fcl::Vec3f> & cp, const fcl::Vec3f & comAcc,
-                                     const fcl::Vec3f & comPos, const std::string & sln, const fcl::Transform3f & tf, bool lv) : contactPositions_(cp),
-                                                                                                                                 comAcceleration_(comAcc),
-                                                                                                                                 comPosition_(comPos),
-                                                                                                                                 sampleLimbName_(sln),
-                                                                                                                                 tfWorldRoot_(tf),
-                                                                                                                                 lightVersion_(lv),
-                                                                                                                                 g_(-9.80665)
+HeuristicParam::HeuristicParam(const std::map<std::string, fcl::Vec3f> & cp, const std::map<std::string, fcl::Vec3f> & ocp,
+const fcl::Vec3f & comAcc, const fcl::Vec3f & comPos, const std::string & sln, const fcl::Transform3f & tf, bool lv) : contactPositions_(cp),
+                                                                                                                       previousContactPositions_(ocp),
+                                                                                                                       comAcceleration_(comAcc),
+                                                                                                                       comPosition_(comPos),
+                                                                                                                       sampleLimbName_(sln),
+                                                                                                                       tfWorldRoot_(tf),
+                                                                                                                       lightVersion_(lv),
+                                                                                                                       g_(-9.80665)
 {}
-ZMPHeuristicParam::ZMPHeuristicParam(const ZMPHeuristicParam & zhp) : contactPositions_(zhp.contactPositions_),
-                                                                        comAcceleration_(zhp.comAcceleration_),
-                                                                        comPosition_(zhp.comPosition_),
-                                                                        sampleLimbName_(zhp.sampleLimbName_),
-                                                                        tfWorldRoot_(zhp.tfWorldRoot_),
-                                                                        lightVersion_(zhp.lightVersion_),
-                                                                        g_(-9.80665)
+HeuristicParam::HeuristicParam(const HeuristicParam & zhp) : contactPositions_(zhp.contactPositions_),
+                                                             previousContactPositions_(zhp.previousContactPositions_),
+                                                             comAcceleration_(zhp.comAcceleration_),
+                                                             comPosition_(zhp.comPosition_),
+                                                             sampleLimbName_(zhp.sampleLimbName_),
+                                                             tfWorldRoot_(zhp.tfWorldRoot_),
+                                                             lightVersion_(zhp.lightVersion_),
+                                                             g_(-9.80665)
 {}
-ZMPHeuristicParam & ZMPHeuristicParam::operator=(const ZMPHeuristicParam & zhp)
+HeuristicParam & HeuristicParam::operator=(const HeuristicParam & zhp)
 {
     if(this != &zhp)
     {
         this->contactPositions_.clear();
         this->contactPositions_.insert(zhp.contactPositions_.begin(), zhp.contactPositions_.end());
+        this->previousContactPositions_.clear();
+        this->previousContactPositions_.insert(zhp.previousContactPositions_.begin(), zhp.previousContactPositions_.end());
         this->comAcceleration_ = zhp.comAcceleration_;
         this->comPosition_ = zhp.comPosition_;
         this->sampleLimbName_ = zhp.sampleLimbName_;

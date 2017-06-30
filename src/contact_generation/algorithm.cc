@@ -132,8 +132,9 @@ ContactComputationStatus ComputeStableContact(const hpp::rbprm::RbPrmFullBodyPtr
     std::size_t maxContactBreaks(static_cast<std::size_t>(body->getMaxContactBreaks()));
     contact::ContactGenHelper contactGenHelper(body,current,current.configuration_,affordances,affFilters,robustnessTreshold,maxContactBreaks,1,false,false,
                                       direction,acceleration,contactIfFails,stableForOneContact);
-    sampling::ZMPHeuristicParam params;
+    sampling::HeuristicParam params;
     params.contactPositions_ = current.contactPositions_;
+    params.previousContactPositions_ = contactGenHelper.previousState_.contactPositions_;
     params.comAcceleration_ = contactGenHelper.acceleration_;
     contactGenHelper.fullBody_->device_->computeForwardKinematics();
     params.comPosition_ = contactGenHelper.fullBody_->device_->positionCenterOfMass();
