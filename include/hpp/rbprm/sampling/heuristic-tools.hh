@@ -78,6 +78,14 @@ namespace sampling{
         Plane & operator=(const Plane & pe);
     };
 
+    /// Computes the angle between 2 vectors on the same base point
+    ///
+    /// \param center The base point of the vectors
+    /// \param end1 The end point of the first vector
+    /// \param end2 The end point of the second vector
+    /// \return The angle between the two vectors (non oriented)
+    double computeAngle(const Vec2D & center, const Vec2D & end1, const Vec2D & end2);
+
     /// Computes the support polygon
     ///
     /// \param contactPositions The map of the contact positions

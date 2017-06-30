@@ -73,7 +73,8 @@ double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*d
 }
 double StraightCentroidHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & direction, const Eigen::Vector3d & /*normal*/, const HeuristicParam & params)
 {
-    if(params.previousContactPositions_.empty())
+    double res(0);
+    if(!params.previousContactPositions_.empty())
     {
         // Try to keep the centroid vector (formed by the previous centroid and the current centroid) aligned with the direction vector of movement
         // TODO
@@ -82,6 +83,7 @@ double StraightCentroidHeuristic(const sampling::Sample & sample, const Eigen::V
     {
         //TODO
     }
+    return res;
 }
 
 double EFORTHeuristic(const sampling::Sample& sample,
