@@ -128,9 +128,9 @@ namespace interpolation {
       for(size_t i = 8 ; i <= 11 ; i++)
         weight[i] = 50.;
 */
-    /*  for(size_t i = 3 ; i < 7 ; i++)
+      for(size_t i = 3 ; i < 7 ; i++)
         weight[i] = 50.;
-        */
+
       constraints::ConfigurationConstraintPtr_t postFunc = constraints::ConfigurationConstraint::create("Postural_Task",device,*ref,weight,mask);
       const NumericalConstraintPtr_t posturalTask = NumericalConstraint::create (postFunc, equals);
       proj->add(posturalTask,SizeIntervals_t (0),1);

@@ -90,7 +90,7 @@ return true;
         constraints::PositionPtr_t position = createPositionMethod(device,fcl::Vec3f(), effector);
         // define arbitrary number of way points depending on length
         //std::size_t nbWayPoints = std::size_t(std::max(effectorDistance * 10, 3.));
-        std::size_t nbWayPoints = 30;
+        std::size_t nbWayPoints = 15;
         std::size_t dim = position->outputSize();
         if(!(nbWayPoints % 2)) nbWayPoints+=1;
         value_type pathIncrement = path->length() / nbWayPoints;
