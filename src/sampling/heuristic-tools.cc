@@ -359,6 +359,8 @@ Vec2D weightedCentroidConvex2D(const std::vector <Vec2D> & convexPolygon)
     return res;
 }
 
+// ---------
+
 StraightLine2D<Vec2D>::StraightLine2D(const Vec2D & eq) : equation(eq)
 {}
 StraightLine2D<Vec2D>::StraightLine2D(const StraightLine2D & sl) : equation(sl.equation)
@@ -410,8 +412,6 @@ StraightLine2D<double> & StraightLine2D<double>::operator=(const StraightLine2D 
 	return *this;
 }
 
-// ---------
-
 StraightLine2DFactory::StraightLine2DFactory(FORM ft) : factory_type(ft)
 {}
 StraightLine2DFactory::StraightLine2DFactory(const StraightLine2DFactory & slf): factory_type(slf.factory_type)
@@ -438,8 +438,6 @@ Line2D * StraightLine2DFactory::create(FORM ft)
 	else
 		return new StraightLine2D<double>();
 }
-
-// ---------
 
 Line2D * StraightLine2DManager::straightLineFromPoints2D(const Vec2D & p1, const Vec2D & p2)
 {
