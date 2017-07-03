@@ -75,6 +75,10 @@ double & Vec2D::operator[](int idx)
     else
         return this->y;
 }
+double Vec2D::euclideanDist(const Vec2D & v1, const Vec2D & v2)
+{
+    return std::sqrt(std::pow(v1.x - v2.x, 2) + std::pow(v1.y - v2.y, 2));
+}
 bool operator==(const Vec2D & v1, const Vec2D & v2)
 {
     //return ((v1.x == v2.x) && (v1.y == v2.y));
@@ -273,11 +277,6 @@ std::vector <Vec2D> convexHull(std::vector <Vec2D> set)
     return res;
 }
 
-double euclideanDist(const Vec2D & v1, const Vec2D & v2)
-{
-    return std::sqrt(std::pow(v1.x - v2.x, 2) + std::pow(v1.y - v2.y, 2));
-}
-
 Vec2D weightedCentroidConvex2D(const std::vector <Vec2D> & convexPolygon)
 {
     if(convexPolygon.empty())
@@ -295,10 +294,10 @@ Vec2D weightedCentroidConvex2D(const std::vector <Vec2D> & convexPolygon)
     else
     {
         // get the longest edge and define the minimum admissible threshold for counting a vertex as a single point
-        double maxDist(euclideanDist(convexPolygon.back(), convexPolygon.front()));
+        double maxDist(Vec2D::euclideanDist(convexPolygon.back(), convexPolygon.front()));
         for(unsigned int i = 0; i < convexPolygon.size() - 1; ++i)
         {
-            double dist(euclideanDist(convexPolygon[i], convexPolygon[i+1]));
+            double dist(Vec2D::euclideanDist(convexPolygon[i], convexPolygon[i+1]));
             if(dist > maxDist)
                 maxDist = dist;
         }
@@ -306,7 +305,7 @@ Vec2D weightedCentroidConvex2D(const std::vector <Vec2D> & convexPolygon)
 
         // shift the list until starting from a lonely (to the rear) point
         std::vector <Vec2D> shifted(convexPolygon);
-        while(euclideanDist(shifted.back(), shifted.front()) <= threshold)
+        while(Vec2D::euclideanDist(shifted.back(), shifted.front()) <= threshold)
         {
             shifted.push_back(shifted.front());
             shifted.erase(shifted.begin());
@@ -319,7 +318,7 @@ Vec2D weightedCentroidConvex2D(const std::vector <Vec2D> & convexPolygon)
 
         for(unsigned int i = 0; i < shifted.size() - 1; ++i)
         {
-            if(euclideanDist(shifted[i], shifted[i+1]) > threshold)
+            if(Vec2D::euclideanDist(shifted[i], shifted[i+1]) > threshold)
             {
                 if(!subsetOngoing)
                     finalSet.push_back(shifted[i]);
@@ -358,6 +357,135 @@ Vec2D weightedCentroidConvex2D(const std::vector <Vec2D> & convexPolygon)
         res = Vec2D(resX, resY);
     }
     return res;
+}
+
+StraightLine2D<Vec2D>::StraightLine2D(const Vec2D & eq) : equation(eq)
+{}
+StraightLine2D<Vec2D>::StraightLine2D(const StraightLine2D & sl) : equation(sl.equation)
+{}
+void StraightLine2D<Vec2D>::setEquation(const Vec2D & eq)
+{
+	this->equation = eq;
+}
+Vec2D StraightLine2D<Vec2D>::getEquation() const
+{
+	return this->equation;
+}
+FORM StraightLine2D<Vec2D>::form() const
+{
+	return Y_FORM;
+}
+
+StraightLine2D<double>::StraightLine2D(const double & eq) : equation(eq)
+{}
+StraightLine2D<double>::StraightLine2D(const StraightLine2D & sl) : equation(sl.equation)
+{}
+void StraightLine2D<double>::setEquation(const double & eq)
+{
+	this->equation = eq;
+}
+double StraightLine2D<double>::getEquation() const
+{
+	return this->equation;
+}
+FORM StraightLine2D<double>::form() const
+{
+	return X_FORM;
+}
+
+StraightLine2D<Vec2D> & StraightLine2D<Vec2D>::operator=(const StraightLine2D & sl)
+{
+	if(this != &sl)
+	{
+		this->equation = sl.equation;
+	}
+	return *this;
+}
+StraightLine2D<double> & StraightLine2D<double>::operator=(const StraightLine2D & sl)
+{
+	if(this != &sl)
+	{
+		this->equation = sl.equation;
+	}
+	return *this;
+}
+
+// ---------
+
+StraightLine2DFactory::StraightLine2DFactory(FORM ft) : factory_type(ft)
+{}
+StraightLine2DFactory::StraightLine2DFactory(const StraightLine2DFactory & slf): factory_type(slf.factory_type)
+{}
+void StraightLine2DFactory::setFactoryType(FORM ft)
+{
+	this->factory_type = ft;
+}
+FORM StraightLine2DFactory::getFactoryType() const
+{
+	return this->factory_type;
+}
+Line2D * StraightLine2DFactory::create() const
+{
+	if(this->factory_type == Y_FORM)
+		return new StraightLine2D<Vec2D>();
+	else
+		return new StraightLine2D<double>();
+}
+Line2D * StraightLine2DFactory::create(FORM ft)
+{
+	if(ft == Y_FORM)
+		return new StraightLine2D<Vec2D>();
+	else
+		return new StraightLine2D<double>();
+}
+
+// ---------
+
+Line2D * StraightLine2DManager::straightLineFromPoints2D(const Vec2D & p1, const Vec2D & p2)
+{
+	FORM ft((std::abs(p1.x - p2.x) < 1e-9) ? X_FORM : Y_FORM);
+	if(ft == X_FORM)
+	{
+		StraightLine2D<double> * res = dynamic_cast<StraightLine2D<double>*>(StraightLine2DFactory::create(ft));
+		res->setEquation(p1.x);
+		return res;
+	}
+	else
+	{
+		StraightLine2D<Vec2D> * res = dynamic_cast<StraightLine2D<Vec2D>*>(StraightLine2DFactory::create(ft));
+		double slope((p2.y - p1.y)/(p2.x - p1.x));
+		double intercept(p1.y - slope*p1.x);
+		res->setEquation(Vec2D(slope, intercept));
+		return res;
+	}
+}
+double StraightLine2DManager::distanceToStraightLine2D(const Vec2D & point, const Line2D * line)
+{
+	double res;
+	if(line->form() == X_FORM)
+	{
+		const StraightLine2D<double> * line_xf = dynamic_cast<const StraightLine2D<double>*>(line);
+		res = std::abs(point.x - line_xf->getEquation());
+	}
+	else
+	{
+		const StraightLine2D<Vec2D> * line_yf = dynamic_cast<const StraightLine2D<Vec2D>*>(line);
+		
+		// get two points of line_yf, pa and pb
+		double a(line_yf->getEquation()[0]), b(line_yf->getEquation()[1]);
+		Vec2D pa(0, b); // x = 0, y = a*0 + b = b
+		Vec2D pb(1, a + b); // x = 1, y = a*1 + b = a+b
+
+		// get the angle theta between the two vectors formed by pa-point and pa-pb
+		Vec2D v1(point.x - pa.x, point.y - pa.y);
+		Vec2D v2(pb.x - pa.x, pb.y - pa.y);
+		double theta(computeAngle(pa, point, pb));
+
+		// get the distance using the sinus of theta and the distance between pa-point (the norm of v1)
+		double n1(std::sqrt(std::pow(v1.x, 2) + std::pow(v1.y, 2)));
+		return (std::sin(theta)*n1);
+	}
+	return res;
 }
 
 } // namespace sampling

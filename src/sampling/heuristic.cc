@@ -62,7 +62,7 @@ double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*d
     try
     {
         Vec2D wcentroid(weightedCentroidConvex2D(convexHull(computeSupportPolygon(contacts))));
-        result = std::sqrt(std::pow(zmp.x - wcentroid.x, 2) + std::pow(zmp.y - wcentroid.y, 2));
+        result = Vec2D::euclideanDist(zmp, wcentroid);
     }
     catch(std::string s)
     {
@@ -73,15 +73,38 @@ double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*d
 }
 double StraightCentroidHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & direction, const Eigen::Vector3d & /*normal*/, const HeuristicParam & params)
 {
-    double res(0);
+    // Try to keep the centroid vector (formed by the previous centroid and the current centroid) aligned with the direction vector of movement
+    double res;
     if(!params.previousContactPositions_.empty())
     {
-        // Try to keep the centroid vector (formed by the previous centroid and the current centroid) aligned with the direction vector of movement
-        // TODO
+        Vec2D base_p(weightedCentroidConvex2D(convexHull(computeSupportPolygon(params.previousContactPositions_))));
+        fcl::Vec3f effectorPosition = transform(sample.effectorPosition_, params.tfWorldRoot_.getTranslation(), params.tfWorldRoot_.getRotation());
+        std::map <std::string, fcl::Vec3f> contacts;
+        contacts.insert(params.contactPositions_.begin(), params.contactPositions_.end());
+        contacts.insert(std::make_pair(params.sampleLimbName_, effectorPosition));
+        Vec2D end1_p(weightedCentroidConvex2D(convexHull(computeSupportPolygon(contacts))));
+        Vec2D end2_p(base_p.x + direction[0], base_p.y + direction[1]);
+        double coeff(1.0/(1e-9 + computeAngle(base_p, end1_p, end2_p))); // The more we move along the direction, the more the coeff is important (because the ideal angle is 0)
+        res = coeff * Vec2D::euclideanDist(base_p, end1_p); // Try to increase the path length as far as possible in the direction of movement
     }
     else
     {
-        //TODO
+        fcl::Vec3f effectorPosition = transform(sample.effectorPosition_, params.tfWorldRoot_.getTranslation(), params.tfWorldRoot_.getRotation());
+        std::map <std::string, fcl::Vec3f> contacts;
+        contacts.insert(params.contactPositions_.begin(), params.contactPositions_.end());
+        contacts.insert(std::make_pair(params.sampleLimbName_, effectorPosition));
+        Vec2D wcen(weightedCentroidConvex2D(convexHull(computeSupportPolygon(contacts))));
+        Vec2D base_p(0, 0);
+        Vec2D end_p(direction[0], direction[1]);
+
+        Line2D * line = StraightLine2DManager::straightLineFromPoints2D(base_p, end_p);
+        double dist(StraightLine2DManager::distanceToStraightLine2D(wcen, line));
+        delete line;
+
+        double coeff(1.0/(1e-9 + dist)); // The more we are close of the direction line (based in 0), the more the coeff is important
+        double resX( (end_p.x >= 0) ? wcen.x : -wcen.x );
+        double resY( (end_p.y >= 0) ? wcen.y : -wcen.y );
+        res = coeff * (resX + resY);
     }
     return res;
 }
