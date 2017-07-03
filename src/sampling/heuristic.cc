@@ -108,6 +108,15 @@ double StraightCentroidHeuristic(const sampling::Sample & sample, const Eigen::V
     }
     return res;
 }
+double CombinedCentroidZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & direction, const Eigen::Vector3d & normal, const HeuristicParam & params)
+{
+    double res;
+    if((std::abs(params.comAcceleration_[0]) <= 1e-3) && (std::abs(params.comAcceleration_[1]) <= 1e-3))
+        res = StraightCentroidHeuristic(sample, direction, normal, params);
+    else
+        res = ZMPHeuristic(sample, direction, normal, params);
+    return res;
+}
 
 double EFORTHeuristic(const sampling::Sample& sample,
                       const Eigen::Vector3d& direction, const Eigen::Vector3d& normal, const HeuristicParam & /*params*/)
@@ -202,6 +211,7 @@ HeuristicFactory::HeuristicFactory()
     heuristics_.insert(std::make_pair("jointlimits", &DistanceToLimitHeuristic));
     heuristics_.insert(std::make_pair("ZMP", &ZMPHeuristic));
     heuristics_.insert(std::make_pair("straightCentroid", &StraightCentroidHeuristic));
+    heuristics_.insert(std::make_pair("combined", &CombinedCentroidZMPHeuristic));
 }
 
 HeuristicFactory::~HeuristicFactory(){}
