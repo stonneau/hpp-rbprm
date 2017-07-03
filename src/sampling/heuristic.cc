@@ -92,10 +92,10 @@ double StraightCentroidHeuristic(const sampling::Sample & sample, const Eigen::V
         fcl::Vec3f effectorPosition = transform(sample.effectorPosition_, params.tfWorldRoot_.getTranslation(), params.tfWorldRoot_.getRotation());
         std::map <std::string, fcl::Vec3f> contacts;
         contacts.insert(params.contactPositions_.begin(), params.contactPositions_.end());
+        Vec2D base_p(weightedCentroidConvex2D(convexHull(computeSupportPolygon(contacts))));
         contacts.insert(std::make_pair(params.sampleLimbName_, effectorPosition));
         Vec2D wcen(weightedCentroidConvex2D(convexHull(computeSupportPolygon(contacts))));
-        Vec2D base_p(0, 0);
-        Vec2D end_p(direction[0], direction[1]);
+        Vec2D end_p(base_p.x + direction[0], base_p.y + direction[1]);
 
         Line2D * line = StraightLine2DManager::straightLineFromPoints2D(base_p, end_p);
         double dist(StraightLine2DManager::distanceToStraightLine2D(wcen, line));
