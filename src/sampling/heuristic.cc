@@ -52,7 +52,7 @@ double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*d
             if((std::abs(params.comAcceleration_[0]) > epsi) || (std::abs(params.comAcceleration_[1]) > epsi)) // (params.comAcceleration_[0] != 0) || (params.comAcceleration_[1] != 0)
                 result = std::numeric_limits<double>::max();
             else
-                result = 0.0;
+                result = Vec2D::euclideanDist(Vec2D(params.comPosition_[0], params.comPosition_[1]), weightedCentroidConvex2D(convexHull(computeSupportPolygon(contacts))));
             return -result; // '-' because minimize a value is equivalent to maximimze its opposite
         }
         double x_zmp(params.comPosition_[0] - (params.comPosition_[2]/zAccel)*params.comAcceleration_[0]);
