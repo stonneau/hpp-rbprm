@@ -24,7 +24,7 @@ using namespace hpp::model;
 using namespace hpp::rbprm;
 using namespace hpp::rbprm::sampling;
 
-double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*direction*/, const Eigen::Vector3d & /*normal*/, const HeuristicParam & params)
+double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & direction, const Eigen::Vector3d & /*normal*/, const HeuristicParam & params)
 {
     fcl::Vec3f effectorPosition = transform(sample.effectorPosition_, params.tfWorldRoot_.getTranslation(), params.tfWorldRoot_.getRotation());
 
@@ -34,6 +34,13 @@ double ZMPHeuristic(const sampling::Sample & sample, const Eigen::Vector3d & /*d
 
     Vec2D zmp;
     double g(params.g_);
+
+    Vec2D dir(direction[0], direction[1]);
+    Vec2D acc(params.comAcceleration_[0], params.comAcceleration_[1]);
+    double pi(3.141592653589793);
+    if(computeAngle(Vec2D(0, 0), dir, acc) >= (pi/2))
+        g = -g;
+
     double result;
 
     if(params.lightVersion_)

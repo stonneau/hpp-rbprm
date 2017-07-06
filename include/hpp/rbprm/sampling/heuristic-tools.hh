@@ -20,9 +20,9 @@ namespace sampling{
         bool lightVersion_; // To true if we don't want to consider z-CoM accelerations
         double g_; // The gravity acceleration
 
-        HeuristicParam() : lightVersion_(false), g_(-9.80665) {}
+        HeuristicParam() : lightVersion_(true), g_(-9.80665) {}
         HeuristicParam(const std::map<std::string, fcl::Vec3f> & cp, const std::map<std::string, fcl::Vec3f> & ocp, const fcl::Vec3f & comAcc, const fcl::Vec3f & comPos,
-                          const std::string & sln, const fcl::Transform3f & tf, bool lv = false);
+                          const std::string & sln, const fcl::Transform3f & tf, bool lv = true);
         HeuristicParam(const HeuristicParam & zhp);
 
         HeuristicParam & operator=(const HeuristicParam & zhp);
