@@ -339,6 +339,19 @@ ProjectionReport projectStateToObstacle(const hpp::rbprm::RbPrmFullBodyPtr_t& bo
     return projectToObstacle(proj, body, limbId, limb, validation, configuration, current, normal, position);
 }
 
+ProjectionReport projectLimbToObstacle(const hpp::rbprm::RbPrmFullBodyPtr_t& body, const std::string& limbId, const hpp::rbprm::RbPrmLimbPtr_t& limb,
+                                        const hpp::rbprm::State& current, const fcl::Vec3f &normal, const fcl::Vec3f &position)
+{
+    hpp::rbprm::State state = current;
+    state.RemoveContact(limbId);
+    model::Configuration_t configuration = current.configuration_;
+    core::ConfigProjectorPtr_t proj = core::ConfigProjector::create(body->device_,"proj", 1e-4, 20);
+    hpp::tools::LockJointRec(limb->limb_->name(), body->device_->rootJoint(), proj);
+    //interpolation::addContactConstraints(body, body->device_,proj, state, state.fixedContacts(state));
+    // get current normal orientation
+    return projectToObstacle(proj, body, limbId, limb, body->GetCollisionValidation(), configuration, current, normal, position);
+}
+
 
 ProjectionReport projectToComPosition(hpp::rbprm::RbPrmFullBodyPtr_t fullBody, const fcl::Vec3f& target,
                                            const hpp::rbprm::State& currentState)
